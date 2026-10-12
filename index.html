@@ -1,1 +1,898 @@
 
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Censo de ferreterías y rentabilidad de la ruta — Ferretería El Carmen, octubre 2026.">
+<meta name="author" content="Ferretería El Carmen">
+<style>
+  :root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  html{scroll-padding-top:60px}
+  html,body{margin:0}
+  body{font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+
+<title>Censo y rentabilidad de ruta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: mapa a la izquierda, calculadora de costo a la derecha; abajo la zona mes a mes. */
+:root{
+  --bg:#f6f4ee; --surface:#fffefa; --surface-2:#f0ede4;
+  --ink:#16150f; --ink-2:#55534a; --muted:#8a877c;
+  --line:#e2dfd3; --line-2:#cfcbbc;
+  --accent:#8c2f2a; --accent-2:#b14a40; --accent-wash:rgba(140,47,42,.08);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --good-ink:#006300;
+  --grid:#e4e1d6; --axis:#c3c0b2;
+  --shadow:0 1px 2px rgba(20,19,15,.06),0 8px 24px rgba(20,19,15,.05);
+  --f-disp:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111110; --surface:#1b1b18; --surface-2:#232320;
+  --ink:#f1efe8; --ink-2:#bfbcb1; --muted:#8a877c;
+  --line:#2e2d28; --line-2:#3c3b35;
+  --accent:#cf6358; --accent-2:#e08275; --accent-wash:rgba(207,99,88,.12);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --good-ink:#0ca30c;
+  --grid:#2a2926; --axis:#3c3b35;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#111110; --surface:#1b1b18; --surface-2:#232320;
+  --ink:#f1efe8; --ink-2:#bfbcb1; --muted:#8a877c;
+  --line:#2e2d28; --line-2:#3c3b35;
+  --accent:#cf6358; --accent-2:#e08275; --accent-wash:rgba(207,99,88,.12);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --good-ink:#0ca30c;
+  --grid:#2a2926; --axis:#3c3b35;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 56px}
+h1,h2,h3{font-family:var(--f-disp);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(26px,4.2vw,40px);font-weight:700;line-height:1.08}
+h2{font-size:19px;font-weight:600}
+h3{font-size:15px;font-weight:600}
+p{margin:0}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600;
+  font-family:var(--f-body)}
+.lead{color:var(--ink-2);max-width:68ch;margin-top:10px}
+header.top{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:26px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+.pad{padding:18px}
+.grid{display:grid;gap:18px}
+.sec{margin-top:30px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.sec-head .note{color:var(--muted);font-size:12.5px}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---------- mapa ---------- */
+.maprow{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.maprow{grid-template-columns:1fr}}
+.mapbox{position:relative;min-width:0}
+svg.map{display:block;width:100%;height:auto;background:var(--surface-2);border-radius:8px;touch-action:pan-y}
+.land{fill:var(--surface);stroke:var(--line-2);stroke-width:.6;vector-effect:non-scaling-stroke}
+.land.neighbor{fill:var(--surface-2);stroke:var(--line);opacity:.85}
+.pt{stroke:var(--surface);vector-effect:non-scaling-stroke;cursor:pointer}
+.pt.off{opacity:.12}
+.pt.sel{stroke:var(--ink)}
+.deplab{fill:var(--muted);font-family:var(--f-body);font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;pointer-events:none}
+.mapctl{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line-2);
+  border-radius:8px;padding:9px 11px;box-shadow:var(--shadow);font-size:12.5px;max-width:260px;z-index:5;
+  transform:translate(-50%,-115%)}
+.tip b{font-family:var(--f-disp)}
+.tip .m{color:var(--ink-2)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* ---------- controles ---------- */
+.chip{font:inherit;font-size:12.5px;padding:5px 11px;border-radius:999px;border:1px solid var(--line-2);
+  background:var(--surface);color:var(--ink-2);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip:focus-visible,select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select,input[type="number"]{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line-2);
+  border-radius:6px;background:var(--surface);color:var(--ink);width:100%}
+input[type="number"]{text-align:right;font-variant-numeric:tabular-nums}
+label.fld{display:grid;gap:4px;font-size:12px;color:var(--ink-2)}
+
+/* ---------- listas ---------- */
+.list{max-height:300px;overflow:auto;border-top:1px solid var(--line)}
+.row{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 2px;border-bottom:1px solid var(--line);
+  cursor:pointer;align-items:center}
+.row:hover{background:var(--accent-wash)}
+.row .n{font-weight:500;font-size:13px;min-width:0;overflow-wrap:anywhere}
+.row .m{color:var(--muted);font-size:11.5px}
+.badge{font-size:10.5px;padding:2px 7px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-2);
+  white-space:nowrap}
+.badge.cli{border-color:var(--s1);color:var(--s1)}
+.badge.pro{border-color:var(--s2);color:var(--s2)}
+.badge.sd{border-color:var(--s3);color:var(--s3)}
+
+/* ---------- tarjetas de cifra ---------- */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tile{background:var(--surface);padding:14px 15px}
+.tile .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tile .v{font-family:var(--f-disp);font-size:24px;font-weight:600;margin-top:4px;line-height:1.1}
+.tile .s{font-size:12px;color:var(--ink-2);margin-top:3px}
+.verdict{display:flex;gap:11px;align-items:flex-start;padding:14px 16px;border-radius:10px;
+  background:var(--surface-2);border:1px solid var(--line)}
+.verdict .ic{width:11px;height:11px;border-radius:50%;flex:none;margin-top:5px}
+.verdict .t{font-family:var(--f-disp);font-weight:600;font-size:16px}
+.verdict .d{color:var(--ink-2);font-size:13px;margin-top:3px}
+
+/* ---------- tablas ---------- */
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:right;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal;min-width:130px}
+thead tr.grp th{border-bottom:0;padding-bottom:0;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);font-weight:600;text-align:center}
+thead tr.grp th[colspan]{border-bottom:1px solid var(--line)}
+thead th[data-k]{cursor:pointer;user-select:none}
+thead th[data-k]:hover{color:var(--accent)}
+thead th[aria-sort] .ar{color:var(--accent)}
+tfoot td{font-weight:600;border-top:1px solid var(--line-2);border-bottom:0}
+thead th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;
+  border-bottom:1px solid var(--line-2)}
+tbody tr:hover{background:var(--accent-wash)}
+td.num,th.num{font-variant-numeric:tabular-nums}
+.up{color:var(--good-ink)}.down{color:var(--crit)}
+
+/* ---------- grafico ---------- */
+.chartbox{position:relative;min-width:0}
+svg.chart{display:block;width:100%;height:auto;overflow:visible}
+.gl{stroke:var(--grid);stroke-width:1;vector-effect:non-scaling-stroke}
+.bl{stroke:var(--axis);stroke-width:1;vector-effect:non-scaling-stroke}
+.tk{fill:var(--muted);font-size:10px;font-family:var(--f-body)}
+.bar{cursor:pointer}
+.bar:hover{filter:brightness(1.08)}
+.eqline{stroke:var(--crit);stroke-width:1.5;stroke-dasharray:5 4;vector-effect:non-scaling-stroke}
+.eqtxt{fill:var(--crit);font-size:10px;font-weight:600;font-family:var(--f-body)}
+
+.foot{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;
+  display:grid;gap:7px;max-width:76ch}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px}
+.kv dt{color:var(--ink-2)}
+.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
+.small{font-size:12.5px;color:var(--ink-2)}
+.lee{margin-top:16px;border-left:3px solid var(--accent);background:var(--surface-2);
+  padding:14px 16px 14px 18px;border-radius:0 8px 8px 0}
+.lee h3{margin-bottom:8px}
+.lee ol{margin:0;padding-left:20px;display:grid;gap:7px;font-size:13px;color:var(--ink-2)}
+.lee ol b{color:var(--ink)}
+.lee > p{margin-top:10px;font-size:13px;color:var(--ink-2)}
+.warnbox{border-left:3px solid var(--warn);background:var(--surface-2);padding:11px 13px;border-radius:0 8px 8px 0;
+  font-size:12.5px;color:var(--ink-2)}
+@media (max-width:620px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media (max-width:380px){.tiles{grid-template-columns:1fr!important}}
+/* barra de navegación */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin:0 -16px 0;padding:9px 16px;
+  display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.nav a{font-size:12.5px;color:var(--ink-2);text-decoration:none;padding:5px 10px;border-radius:999px}
+.nav a:hover{background:var(--accent-wash);color:var(--accent)}
+.nav .mark{font-family:var(--f-disp);font-weight:700;font-size:13px;color:var(--accent);
+  letter-spacing:-.01em;margin-right:8px}
+.tema{margin-left:auto;font:inherit;font-size:12px;padding:5px 11px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2)}
+/* franja del veredicto */
+.hero{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:18px}
+.hero > div{background:var(--surface);padding:15px 16px}
+.hero .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.hero .v{font-family:var(--f-disp);font-size:clamp(20px,2.6vw,29px);font-weight:700;margin-top:5px;
+  line-height:1.05;letter-spacing:-.02em}
+.hero .s{font-size:11.5px;color:var(--ink-2);margin-top:4px}
+.hero > div:last-child{background:var(--accent);color:#fff}
+.hero > div:last-child .k,.hero > div:last-child .s{color:rgba(255,255,255,.78)}
+@media (max-width:760px){.hero{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{
+  .nav,.tema{display:none!important}
+  .card,.tiles,.hero,.lee{break-inside:avoid;box-shadow:none}
+  body{background:#fff}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+<nav class="nav">
+  <span class="mark">EL CARMEN</span>
+  <a href="#mapa">Censo</a>
+  <a href="#costo">Costo de la ruta</a>
+  <a href="#meses">Mes a mes</a>
+  <a href="#clientes">Clientes</a>
+  <button class="tema" id="btema" aria-label="Cambiar entre claro y oscuro">Modo oscuro</button>
+</nav>
+
+<header class="top">
+  <p class="eyebrow">Ferretería El Carmen · asesor comercial</p>
+  <h1>El censo en el mapa y lo que cuesta la ruta</h1>
+  <p class="lead">100 ferreterías censadas entre diciembre de 2025 y octubre de 2026, y la cuenta de si la zona
+  paga al asesor que la atiende. Los números de venta salen de SAP; los viáticos, de la hoja de la ruta
+  CA5 · Santa Bárbara Sur · Santa Bárbara Norte.</p>
+
+  <div class="hero">
+    <div><div class="k">Vende al mes</div><div class="v num" id="hVen">—</div>
+      <div class="s" id="hQuien">—</div></div>
+    <div><div class="k">Deja de utilidad bruta</div><div class="v num" id="hUti">—</div>
+      <div class="s" id="hMar">—</div></div>
+    <div><div class="k">Cuesta el asesor</div><div class="v num" id="hCos">—</div>
+      <div class="s">salario, cargas y ruta</div></div>
+    <div><div class="k">Queda</div><div class="v num" id="hCon">—</div>
+      <div class="s" id="hVer">—</div></div>
+  </div>
+</header>
+
+<!-- ======================= MAPA ======================= -->
+<section id="mapa">
+  <div class="sec-head">
+    <h2>Dónde están las ferreterías censadas</h2>
+    <span class="note" id="mapcount">—</span>
+  </div>
+
+  <div class="maprow">
+    <div class="card pad mapbox">
+      <div class="mapctl">
+        <button class="chip" id="vZona" aria-pressed="true">Zona</button>
+        <button class="chip" id="vPais" aria-pressed="false">Todo Honduras</button>
+        <span style="flex:1"></span>
+        <button class="chip" data-t="cliente_actual" aria-pressed="true">Clientes</button>
+        <button class="chip" data-t="prospecto" aria-pressed="true">Prospectos</button>
+        <button class="chip" data-t="sin_dato" aria-pressed="true">Sin clasificar</button>
+      </div>
+      <svg class="map" id="map" viewBox="0 0 100 70" role="img"
+           aria-label="Mapa de Honduras con las ferreterías censadas"></svg>
+      <div class="tip" id="tip" hidden></div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--s1)"></i>cliente actual</span>
+        <span><i class="dot" style="background:var(--s2)"></i>prospecto</span>
+        <span><i class="dot" style="background:var(--s3)"></i>sin clasificar</span>
+        <span style="color:var(--muted)">el borde grueso marca las que venden cemento</span>
+      </div>
+    </div>
+
+    <div class="card pad">
+      <div style="display:grid;gap:10px">
+        <label class="fld">Departamento
+          <select id="fdep"></select>
+        </label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="chip" id="fcem" aria-pressed="false">Solo las de cemento</button>
+          <button class="chip" id="fmay" aria-pressed="false">Solo mayoristas</button>
+        </div>
+      </div>
+      <hr class="sep">
+      <div id="detalle" class="small">Tocá un punto del mapa o un nombre de la lista.</div>
+      <hr class="sep">
+      <div class="list" id="lista"></div>
+    </div>
+  </div>
+
+  <p class="warnbox" style="margin-top:14px" id="gpsnote">—</p>
+</section>
+
+<!-- ======================= RENTABILIDAD ======================= -->
+<section class="sec" id="costo">
+  <div class="sec-head">
+    <h2>¿La zona paga al asesor?</h2>
+    <span class="note">cambiá cualquier número y la cuenta se rehace</span>
+  </div>
+
+  <div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.45fr)">
+    <div class="card pad">
+      <h3 style="margin-bottom:10px">Los datos de entrada</h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="chip preset" data-p="jose" aria-pressed="true">José A. · 2026</button>
+        <button class="chip preset" data-p="nahum" aria-pressed="false">Nahum · 2025‑26</button>
+        <button class="chip preset" data-p="ruta" aria-pressed="false">Ruta CA5+SBS+SBN</button>
+      </div>
+      <div style="display:grid;gap:10px">
+        <label class="fld">Salario base del mes (L)
+          <input type="number" id="iSal" value="13000" step="500" min="0"></label>
+        <label class="fld">Factor de cargas sociales (×)
+          <input type="number" id="iCar" value="1.35" step="0.05" min="1"></label>
+        <label class="fld">Viáticos del ciclo completo (L)
+          <input type="number" id="iVia" value="20741.10" step="100" min="0"></label>
+        <label class="fld">Ciclos por mes
+          <input type="number" id="iCic" value="1" step="0.5" min="0"></label>
+        <label class="fld">Venta del mes, sin ISV (L)
+          <input type="number" id="iVen" value="1149894.68" step="10000" min="0"></label>
+        <label class="fld">Margen limpio (%)
+          <input type="number" id="iMar" value="16.4" step="0.1" min="0" max="100"></label>
+        <label class="fld">Facturas por mes
+          <input type="number" id="iFac" value="30.2" step="1" min="0"></label>
+      </div>
+      <p class="small" style="margin-top:12px;color:var(--muted)">El factor de cargas es un estimado:
+      décimo tercero, décimo cuarto, vacaciones, IHSS y RAP. Confirmalo contra la planilla.</p>
+    </div>
+
+    <div style="display:grid;gap:14px;min-width:0">
+      <div class="verdict" id="verdict">
+        <i class="ic" style="background:var(--good)"></i>
+        <div><div class="t" id="vTit">—</div><div class="d" id="vDet">—</div></div>
+      </div>
+      <div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="tile"><div class="k">Cuesta al mes</div><div class="v num" id="oCost">—</div>
+          <div class="s" id="oCostD">—</div></div>
+        <div class="tile"><div class="k">Deja al mes</div><div class="v num" id="oCont">—</div>
+          <div class="s">utilidad bruta menos lo que cuesta</div></div>
+        <div class="tile"><div class="k">Venta de equilibrio</div><div class="v num" id="oEq">—</div>
+          <div class="s" id="oEqD">—</div></div>
+        <div class="tile"><div class="k">Se come de la utilidad</div><div class="v num" id="oPct">—</div>
+          <div class="s" id="oPctD">de cada L 100 de utilidad bruta</div></div>
+        <div class="tile"><div class="k">Costo por factura</div><div class="v num" id="oFac">—</div>
+          <div class="s" id="oFacD">—</div></div>
+        <div class="tile"><div class="k">Costo sobre la venta</div><div class="v num" id="oSob">—</div>
+          <div class="s">lo que pesa el asesor en el precio</div></div>
+      </div>
+
+      <div class="card pad">
+        <h3>De dónde sale el costo</h3>
+        <dl class="kv" style="margin-top:9px">
+          <dt>Salario base</dt><dd id="dSal">—</dd>
+          <dt>Cargas sociales estimadas</dt><dd id="dCar">—</dd>
+          <dt>Viáticos de hotel y comida</dt><dd id="dVia">—</dd>
+          <dt>Combustible y depreciación</dt><dd id="dCom">—</dd>
+          <dt style="font-weight:600;color:var(--ink)">Total del mes</dt>
+          <dd id="dTot" style="font-weight:600">—</dd>
+        </dl>
+        <p class="small" style="margin-top:10px">Los viáticos de la hoja ya traen el combustible y la
+        depreciación del vehículo: 1,109.75 km entre las tres rutas, L 6,381.10. Al cambiar el monto del
+        ciclo ese desglose se reparte en la misma proporción.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card pad" style="margin-top:14px">
+    <h3>La hoja de viáticos, ruta por ruta</h3>
+    <div class="tscroll" style="margin-top:8px">
+      <table>
+        <thead><tr><th>Concepto</th><th class="num">Unitario</th><th class="num">CA5</th>
+          <th class="num">Sta. Bárbara Sur</th><th class="num">Sta. Bárbara Norte</th><th class="num">Total</th></tr></thead>
+        <tbody>
+          <tr><td>Desayuno</td><td class="num">125.00</td><td class="num">500.00</td><td class="num">500.00</td><td class="num">500.00</td><td class="num">1,500.00</td></tr>
+          <tr><td>Almuerzo</td><td class="num">150.00</td><td class="num">750.00</td><td class="num">750.00</td><td class="num">750.00</td><td class="num">2,250.00</td></tr>
+          <tr><td>Cena</td><td class="num">125.00</td><td class="num">500.00</td><td class="num">500.00</td><td class="num">500.00</td><td class="num">1,500.00</td></tr>
+          <tr><td>Hotel</td><td class="num">750.00</td><td class="num">3,000.00</td><td class="num">3,000.00</td><td class="num">3,000.00</td><td class="num">9,000.00</td></tr>
+          <tr><td>Peajes</td><td class="num">22.00</td><td class="num">44.00</td><td class="num">44.00</td><td class="num">22.00</td><td class="num">110.00</td></tr>
+          <tr><td>Combustible y depreciación</td><td class="num" style="color:var(--muted)">1,109.75 km</td><td class="num">1,659.70</td><td class="num">2,254.90</td><td class="num">2,466.50</td><td class="num">6,381.10</td></tr>
+          <tr style="font-weight:600"><td>Total de la ruta</td><td class="num"></td><td class="num">6,453.70</td><td class="num">7,048.90</td><td class="num">7,238.50</td><td class="num">20,741.10</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small" style="margin-top:10px">Cada ruta son cuatro noches de hotel y cinco almuerzos: una
+    semana de trabajo. Las tres juntas son tres semanas de ruta al mes, por eso el ciclo arranca en 1.</p>
+  </div>
+</section>
+
+<!-- ======================= MES A MES ======================= -->
+<section class="sec" id="meses">
+  <div class="sec-head">
+    <h2>La zona mes a mes, con los dos asesores</h2>
+    <span class="note">venta neta sin ISV · la raya roja es la venta de equilibrio</span>
+  </div>
+  <div class="card pad chartbox">
+    <svg class="chart" id="chart" viewBox="0 0 720 300" role="img"
+         aria-label="Venta mensual de la zona por asesor contra la venta de equilibrio"></svg>
+    <div class="tip" id="ctip" hidden></div>
+    <svg class="chart" id="chartmg" viewBox="0 0 720 150" role="img" style="margin-top:10px"
+         aria-label="Margen limpio mes a mes"></svg>
+    <div class="legend" style="margin-top:12px">
+      <span><i class="dot" style="background:var(--s1)"></i>105‑NAHUM.F · oct 2025 a abr 2026</span>
+      <span><i class="dot" style="background:var(--s2)"></i>116‑JOSE.A · may a sep 2026</span>
+      <span><i class="dot" style="background:var(--crit);border-radius:1px;height:3px;width:14px"></i>venta de equilibrio</span>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(290px,1fr));margin-top:14px">
+    <div class="card pad">
+      <h3>Qué pasó con la cartera</h3>
+      <div class="tscroll" style="margin-top:8px">
+        <table>
+          <thead><tr><th></th><th class="num">Clientes</th><th class="num">Antes/mes</th><th class="num">Ahora/mes</th></tr></thead>
+          <tbody>
+            <tr><td>Siguen comprando</td><td class="num">37</td><td class="num">337,522.72</td><td class="num">795,331.44</td></tr>
+            <tr><td>Se dejaron de atender</td><td class="num">38</td><td class="num">202,055.55</td><td class="num">—</td></tr>
+            <tr><td>Nuevos</td><td class="num">18</td><td class="num">—</td><td class="num">354,563.24</td></tr>
+            <tr style="font-weight:600"><td>Total</td><td class="num">93</td><td class="num">539,578.27</td><td class="num">1,149,894.68</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small" style="margin-top:10px">La zona subió L 610,316.41 por mes. De eso, L 457,808.72
+      viene de los mismos clientes comprando más. Ese es el crecimiento que no depende de seguir
+      consiguiendo nombres nuevos. La utilidad bruta de la zona pasó de
+      <b>L 94,510.39</b> a <b>L 186,662.25</b> por mes.</p>
+    </div>
+
+    <div class="card pad">
+      <h3>Y qué pasó con el surtido</h3>
+      <div class="tscroll" style="margin-top:8px">
+        <table>
+          <thead><tr><th>Grupo</th><th class="num">% antes</th><th class="num">% ahora</th><th class="num">Cambio</th></tr></thead>
+          <tbody>
+            <tr><td>CO10 Varillas</td><td class="num">30.2%</td><td class="num">62.1%</td><td class="num up">+338%</td></tr>
+            <tr><td>CO08 Mallas y alambres</td><td class="num">8.4%</td><td class="num">10.4%</td><td class="num up">+164%</td></tr>
+            <tr><td>EM03 Tubería metálica</td><td class="num">6.2%</td><td class="num">9.1%</td><td class="num up">+212%</td></tr>
+            <tr><td>CA01 Accesorios de cerámica</td><td class="num">19.9%</td><td class="num">7.3%</td><td class="num down">−22%</td></tr>
+            <tr><td>CA02 Cerámicas</td><td class="num">10.4%</td><td class="num">1.6%</td><td class="num down">−67%</td></tr>
+            <tr><td>CO07 Láminas y estructuras</td><td class="num">5.1%</td><td class="num">1.2%</td><td class="num down">−49%</td></tr>
+            <tr><td>CO01 Agregados</td><td class="num">3.1%</td><td class="num">0.3%</td><td class="num down">−80%</td></tr>
+            <tr><td>FE08 Herrajes</td><td class="num">1.8%</td><td class="num">0.2%</td><td class="num down">−78%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small" style="margin-top:10px">Seis de cada diez lempiras de la zona hoy son varilla. Ahí está
+      la explicación del margen: la venta se duplicó y el margen limpio bajó de 18.2% a 16.4%. Vende más,
+      pero vende más de lo que menos deja.</p>
+    </div>
+  </div>
+</section>
+
+
+<section class="sec" id="clientes">
+  <div class="sec-head">
+    <h2>Los clientes de la zona, uno por uno</h2>
+    <span class="note">tocá un encabezado para ordenar</span>
+  </div>
+  <div class="card pad">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+      <button class="chip ce" data-e="sigue" aria-pressed="true">Siguen comprando</button>
+      <button class="chip ce" data-e="perdido" aria-pressed="true">Se dejaron de atender</button>
+      <button class="chip ce" data-e="nuevo" aria-pressed="true">Nuevos</button>
+      <span style="flex:1"></span>
+      <span class="small" id="cliN">—</span>
+    </div>
+    <div class="tscroll">
+      <table id="tcli">
+        <thead>
+          <tr class="grp"><th></th><th></th>
+            <th colspan="3">Nahum · oct 2025 a abr 2026</th>
+            <th colspan="3">José A. · may a sep 2026</th><th></th></tr>
+          <tr>
+          <th data-k="n">Cliente <span class="ar"></span></th>
+          <th data-k="e">Etapa <span class="ar"></span></th>
+          <th class="num" data-k="f1">Fact <span class="ar"></span></th>
+          <th class="num" data-k="a">Venta/mes <span class="ar"></span></th>
+          <th class="num" data-k="ua">Utilidad/mes <span class="ar"></span></th>
+          <th class="num" data-k="f2">Fact <span class="ar"></span></th>
+          <th class="num" data-k="b">Venta/mes <span class="ar"></span></th>
+          <th class="num" data-k="ub">Utilidad/mes <span class="ar"></span></th>
+          <th class="num" data-k="mg">Margen <span class="ar"></span></th>
+        </tr></thead>
+        <tbody id="cliBody"></tbody>
+        <tfoot id="cliFoot"></tfoot>
+      </table>
+    </div>
+    <div class="lee">
+      <h3>Lo que hay que ver en esta tabla</h3>
+      <ol>
+        <li><b>Cambiamos cartera buena por cartera grande.</b> Los 38 clientes que se dejaron de atender
+        dejaban 19.9% de margen; los 18 nuevos dejan 16.2%. Esos 38 daban
+        <b>L 40,258.77 de utilidad al mes</b> — más de lo que cuesta el asesor completo.</li>
+        <li><b>Tres cuentas sostienen la zona.</b> Comercial Zuñiga, CONAHSA y ARIAS suman
+        <b>L 301,211 al mes</b>, el 26% de la venta, al 13.3% de margen y con tres facturas al mes cada una.
+        Eso es venta de proyecto, no de ruta: si solo Zuñiga se va, se va el 9.7% de la zona.</li>
+        <li><b>Con los de siempre no hay problema.</b> Los 37 que siguen comprando duplicaron el volumen sin
+        perder margen: 16.1% antes, 16.3% ahora.</li>
+      </ol>
+      <p>La decisión que sale de aquí es si vale la pena ir a recuperar a los 38 que se perdieron,
+      empezando por AGROCOMERCIAL JENNY, FERRETERIA E INVERSIONES GOMEZ e INVERSIONES GUZMAN: entre los tres
+      daban L 20,515 de utilidad al mes.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script>
+const PUNTOS = [{"n":"FERRETERIA GUANCAPLAS","m":"San Miguelito","d":"Intibucá","t":"cliente_actual","s":"","c":false,"rtn":"1014199000830","tel":"50497536509","p":"Euduar reyes","f":"2026-04-24","fo":0,"ga":0,"lat":14.58342,"lon":-88.57716},{"n":"Ferretería Don Vasquez","m":"San Miguelito","d":"Intibucá","t":"sin_dato","s":"","c":false,"rtn":"000000000000000","tel":"50494412992","p":"Hugo Vasquez","f":"2026-01-13","fo":3,"ga":0,"lat":null,"lon":null},{"n":"Soluciones Constructivas Ochosiete","m":"Gracias","d":"Lempira","t":"cliente_actual","s":"","c":false,"rtn":"1701-1987-01120-9","tel":"50494679356","p":"jose fabian","f":"2026-05-13","fo":0,"ga":0,"lat":14.58595,"lon":-88.58623},{"n":"FERRETERIA EL PROFE","m":"Siguatepeque","d":"Comayagua","t":"prospecto","s":"Mayorista","c":false,"rtn":"0318-1977-00461-0","tel":"50499515598","p":"Carlos David Castillo","f":"2026-04-29","fo":0,"ga":0,"lat":14.44965,"lon":-87.64287},{"n":"Comercial Cabañas","m":"San José","d":"La Paz","t":"cliente_actual","s":"Mayorista","c":false,"rtn":"1212-1974-00134-1","tel":"","p":"Martin Turcios","f":"2026-01-20","fo":3,"ga":0,"lat":14.2477,"lon":-87.95983},{"n":"HIPERTECHOS DE OCCIDENTE","m":"La Esperanza","d":"Intibucá","t":"cliente_actual","s":"","c":false,"rtn":"84848484848848484","tel":"50497889716","p":"gabriel","f":"2026-04-23","fo":0,"ga":0,"lat":14.60518,"lon":-88.58334},{"n":"Casa Gutiérrez","m":"Villa de San Antonio","d":"Comayagua","t":"prospecto","s":"Pequeño Ferretero","c":true,"rtn":"0318-1952-00032-2","tel":"50495102206","p":"Raul Gutiérrez","f":"2026-01-21","fo":3,"ga":0,"lat":14.3234,"lon":-87.61344},{"n":"FERRETERIA LOS PROFESIONALES","m":"San Manuel Colohete","d":"Lempira","t":"cliente_actual","s":"","c":false,"rtn":"1301199400586","tel":"","p":"cristhian","f":"2026-04-22","fo":0,"ga":0,"lat":14.4127,"lon":-88.60407},{"n":"Ferretería y Materiales Gomez","m":"Taulabé","d":"Comayagua","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"10071976001480","tel":"50498805695","p":"Carlos Gomez","f":"2025-12-23","fo":4,"ga":0,"lat":14.69461,"lon":-87.96863},{"n":"Soluciones Constructivas Ochosiete","m":"Gracias","d":"Lempira","t":"cliente_actual","s":"","c":false,"rtn":"1701-1987-01120-9","tel":"50494679356","p":"jose fabian","f":"2026-05-13","fo":0,"ga":0,"lat":14.58595,"lon":-88.58623},{"n":"Ferretería Aposss","m":"Las Lajas","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"0320-2001-00375-0","tel":"50497225123","p":"Michelle Banegas","f":"2026-01-23","fo":3,"ga":0,"lat":14.89223,"lon":-87.58272},{"n":"Inversiones Bautista Santos","m":"Santiago de Puringla","d":"La Paz","t":"cliente_actual","s":"","c":true,"rtn":"1218-1991-00218-1","tel":"50496582165","p":"Franck Bautista","f":"2026-01-20","fo":0,"ga":0,"lat":14.35859,"lon":-87.90359},{"n":"La Casa del Tornillo","m":"Jesús de Otoro","d":"Intibucá","t":"sin_dato","s":"Mayorista","c":false,"rtn":"10071976003103","tel":"50496466334","p":"Juan Carlos Ramirez","f":"2026-01-12","fo":3,"ga":0,"lat":null,"lon":null},{"n":"ihehihiehiuehiehiuehe","m":"Potrerillos","d":"El Paraíso","t":"cliente_actual","s":"Pequeño Ferretero","c":true,"rtn":"8768768768768","tel":"50442343432424324","p":"sffsfwfewf wrewrewrr","f":"2026-09-29","fo":0,"ga":0,"lat":14.59738,"lon":-87.83561},{"n":"Ferretería Argueta","m":"Jesús de Otoro","d":"Intibucá","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"10071967001190","tel":"50487950205","p":"Carlos Argueta","f":"2026-01-12","fo":3,"ga":0,"lat":null,"lon":null},{"n":"Ferreteria Ebenezer","m":"San José de Comayagua","d":"Comayagua","t":"prospecto","s":"Pequeño Ferretero","c":true,"rtn":"0314-9025-30083-3","tel":"504+1 (786) 727-6315","p":"Emmanuel Garcia","f":"2026-01-27","fo":3,"ga":0,"lat":14.73137,"lon":-88.03498},{"n":"Comercial y Ferretería Tito","m":"Villa de San Antonio","d":"Comayagua","t":"sin_dato","s":"Mayorista","c":false,"rtn":"12011936001558","tel":"","p":"","f":"2025-12-26","fo":4,"ga":0,"lat":14.29298,"lon":-87.56995},{"n":"Comercial y Ferretería Leo","m":"Jesús de Otoro","d":"Intibucá","t":"prospecto","s":"Mayorista","c":true,"rtn":"1007-1967-00194-8","tel":"504+504 9998-6112","p":"José Adeliano Ventura","f":"2026-02-02","fo":4,"ga":0,"lat":14.49385,"lon":-87.98642},{"n":"Ferretería San Matias","m":"La Campa","d":"Lempira","t":"sin_dato","s":"Mayorista","c":false,"rtn":"00000","tel":"50431802424","p":"Alirio Enrriquez","f":"2026-01-13","fo":3,"ga":0,"lat":null,"lon":null},{"n":"FERRETERIA Y ABARROTERIA GAELITO","m":"San Sebastián","d":"Lempira","t":"cliente_actual","s":"","c":false,"rtn":"0809464646464","tel":"50433224057","p":"ramon benitw","f":"2026-04-17","fo":0,"ga":1,"lat":14.25151,"lon":-87.85484},{"n":"INVERSIONES AGRO CENTRO","m":"Las Lajas","d":"Comayagua","t":"cliente_actual","s":"","c":true,"rtn":"0320-2002-00116-9","tel":"50499088514","p":"","f":"2026-07-06","fo":0,"ga":0,"lat":14.64198,"lon":-87.59993},{"n":"Insumos Agropecuarios Villatro","m":"Jesús de Otoro","d":"Intibucá","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"10061969001675","tel":"50499558432","p":"Roney Villatoro","f":"2026-01-12","fo":3,"ga":0,"lat":null,"lon":null},{"n":"comercial Suiza","m":"San Pedro Zacapa","d":"Santa Bárbara","t":"prospecto","s":"Pequeño Ferretero","c":false,"rtn":"1623-1982-00138-7","tel":"50499025485","p":"Jaime Dominguez","f":"2026-05-25","fo":1,"ga":10,"lat":14.79775,"lon":-88.03238},{"n":"Ferretería San Miguel","m":"Siguatepeque","d":"Comayagua","t":"sin_dato","s":"Mayorista","c":false,"rtn":"03181963004660","tel":"50431450490","p":"Pablo Toledo","f":"2026-01-16","fo":3,"ga":0,"lat":14.60383,"lon":-87.83074},{"n":"DISTRIBUIDORA TU BENDICION S. DE R.L","m":"San Jerónimo","d":"Comayagua","t":"cliente_actual","s":"","c":true,"rtn":"0313-9025-23491-8","tel":"","p":"","f":"2026-09-04","fo":1,"ga":0,"lat":14.45777,"lon":-87.62702},{"n":"precios bajos","m":"El Paraíso","d":"Copán","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"0417-1959-00182-3","tel":"50498269569","p":"Isaura castillo Contreras","f":"2026-07-15","fo":1,"ga":1,"lat":15.02397,"lon":-88.98243},{"n":"Bloquera Blessing","m":"Santa Cruz de Yojoa","d":"Cortés","t":"prospecto","s":"Mayorista","c":false,"rtn":"1413-1972-00309-7","tel":"504+504 9769-4764","p":"Elmer Mejía","f":"2026-01-30","fo":4,"ga":0,"lat":14.95891,"lon":-88.03488},{"n":"FERRETERIA HERNANDEZ","m":"Comayagua","d":"Comayagua","t":"cliente_actual","s":"","c":true,"rtn":"0801-9023-49095-0","tel":"50432028828","p":"Franklin Hernández","f":"2026-07-19","fo":0,"ga":0,"lat":14.74934,"lon":-87.4023},{"n":"Ferretería SIC","m":"La Esperanza","d":"Intibucá","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"000000","tel":"50498024502","p":"Emerson Ramos","f":"2026-01-14","fo":3,"ga":0,"lat":14.3098,"lon":-88.16554},{"n":"MINI FERRETERIA LAS TEJERAS","m":"Lepaera","d":"Lempira","t":"cliente_actual","s":"","c":false,"rtn":"131319810015664","tel":"50497123482","p":"santos alfaro lopez","f":"2026-08-04","fo":0,"ga":0,"lat":14.09284,"lon":-87.18072},{"n":"Comercial Padilla","m":"La Libertad","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"0313-1995-00753-3","tel":"5049612-0038","p":"Claudia Padilla","f":"2026-01-22","fo":4,"ga":0,"lat":14.80612,"lon":-87.51889},{"n":"COMERCIAL GALDAMEZ","m":"Sensenti","d":"Ocotepeque","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"1415-1976-00046-8","tel":"50499731646","p":"David Alonzo Galdámez gabarrete","f":"2026-07-21","fo":1,"ga":1,"lat":14.49604,"lon":-88.93688},{"n":"FERREYA","m":"Sinuapa","d":"Ocotepeque","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"1401-1993-00597-0","tel":"50496424721","p":"Yesenia karolina Arana","f":"2026-09-21","fo":1,"ga":1,"lat":14.44325,"lon":-89.18893},{"n":"SAN MIGUEL FERRETERIA","m":"Siguatepeque","d":"Comayagua","t":"cliente_actual","s":"","c":true,"rtn":"0318-1963-00466-0","tel":"50431450490","p":"Pablo Toledo","f":"2026-06-29","fo":0,"ga":0,"lat":14.46287,"lon":-87.6456},{"n":"Inversiones Gomez","m":"Esquías","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":false,"rtn":"017091980008321","tel":"50498602546","p":"Luis Gomez","f":"2026-08-31","fo":0,"ga":0,"lat":null,"lon":null},{"n":"inversiones amaya","m":"Belén","d":"Lempira","t":"prospecto","s":"","c":true,"rtn":"130219901433","tel":"50495566079","p":"","f":"","fo":2,"ga":0,"lat":14.50648,"lon":-88.48861},{"n":"Venta de Bloques y Adoquines","m":"San Miguelito","d":"Intibucá","t":"sin_dato","s":"Mayorista","c":false,"rtn":"000000000000","tel":"50496798792","p":"Virgilio","f":"2026-01-13","fo":3,"ga":0,"lat":null,"lon":null},{"n":"Comercial Gabriela","m":"Marcala","d":"La Paz","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"1203-1979-00125-1","tel":"5049906-6162","p":"Santiago Pereira","f":"2026-01-19","fo":3,"ga":0,"lat":14.16414,"lon":-88.03578},{"n":"Ferretería Aleman","m":"Villa de San Antonio","d":"Comayagua","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"10101982000999","tel":"50492115756","p":"Lelis Aleman","f":"2025-12-26","fo":3,"ga":0,"lat":14.32348,"lon":-87.60586},{"n":"Ferretería Nazareth","m":"Las Lajas","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":false,"rtn":"0312198400219","tel":"50495099369","p":"Prudencia Medrano","f":"2026-01-23","fo":3,"ga":0,"lat":14.8945,"lon":-87.57756},{"n":"Comercial Sesma","m":"La Esperanza","d":"Intibucá","t":"sin_dato","s":"Mayorista","c":false,"rtn":"00000","tel":"50497378522","p":"Marvin Martinez","f":"2026-01-14","fo":3,"ga":0,"lat":14.31326,"lon":-88.17636},{"n":"FERRETERIA Y ABARROTERIA GAELITO","m":"San Sebastián","d":"Lempira","t":"cliente_actual","s":"","c":true,"rtn":"46464464949494946","tel":"50433224057","p":"ramon benites","f":"2026-04-17","fo":0,"ga":0,"lat":14.25152,"lon":-87.85479},{"n":"Techos El Constructor","m":"Siguatepeque","d":"Comayagua","t":"sin_dato","s":"Mayorista","c":false,"rtn":"03101976001038","tel":"50497796858","p":"Miguel Caballero","f":"2026-01-16","fo":3,"ga":0,"lat":14.58664,"lon":-87.84654},{"n":"Mini Ferreteria La Mundial","m":"Ocotepeque","d":"Ocotepeque","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"1401-1988-00608-0","tel":"50496583745","p":"Gustavo vasquez","f":"2026-04-27","fo":1,"ga":1,"lat":14.43511,"lon":-89.18483},{"n":"Ferreteria Vasquez","m":"San Sebastián","d":"Lempira","t":"cliente_actual","s":"","c":false,"rtn":"1321-1993-00129-8","tel":"50489402108","p":"josue vasquez","f":"2026-04-23","fo":0,"ga":0,"lat":14.5834,"lon":-88.57717},{"n":"ferretería Hernández","m":"San Marcos","d":"Ocotepeque","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"1413-9026-37156-4","tel":"50488579998","p":"Elmer Donaldo Landaverde mejia","f":"2026-07-06","fo":1,"ga":1,"lat":14.4107,"lon":-88.95101},{"n":"Ferretería Lenca","m":"Intibucá","d":"Intibucá","t":"cliente_actual","s":"","c":true,"rtn":"1208-1964-00213-7","tel":"50492313416","p":"julio cesar Nolasco bautista","f":"2026-03-03","fo":1,"ga":0,"lat":14.3173,"lon":-88.15759},{"n":"Ferreteria la Fé","m":"San Antonio del Norte","d":"La Paz","t":"cliente_actual","s":"","c":true,"rtn":"0319-1996-00404-6","tel":"50499613703","p":"Katherin daniela","f":"2026-04-14","fo":0,"ga":0,"lat":14.32306,"lon":-87.60973},{"n":"Inversiones Gome","m":"Esquías","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"1709-1980-00832-1","tel":"50496378460","p":"Luis Gomez","f":"2026-01-22","fo":3,"ga":0,"lat":14.68894,"lon":-87.49348},{"n":"FERRETERIA POLANCO","m":"Cucuyagua","d":"Copán","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"0406-1996-00314-8","tel":"50493500767","p":"vayron polanco","f":"2026-04-28","fo":1,"ga":2,"lat":49.97086,"lon":-2.36959},{"n":"Comercial y Ferretería Zavala","m":"Santiago de Puringla","d":"La Paz","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"1218-1988-00158-2","tel":"50499124777","p":"Edwar Zavala","f":"2026-01-20","fo":3,"ga":0,"lat":14.39391,"lon":-87.86269},{"n":"AGROVETERINARIA Y SOLUCIONES SIERRA","m":"Nueva Arcadia","d":"Copán","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"1503-1989-02683-5","tel":"50495577469","p":"suany mejia","f":"2026-09-16","fo":1,"ga":1,"lat":15.05813,"lon":-88.75459},{"n":"FERRETERIA UNO","m":"San Jerónimo","d":"Comayagua","t":"cliente_actual","s":"","c":true,"rtn":"0304199100045","tel":"50488111465","p":"Meidy Lagos","f":"2026-07-06","fo":1,"ga":0,"lat":14.62757,"lon":-87.60534},{"n":"Comercial y Ferretería Flores","m":"Villa de San Antonio","d":"Comayagua","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"03191996002518","tel":"50497154872","p":"Anai Rivera","f":"2025-12-26","fo":3,"ga":0,"lat":14.2926,"lon":-87.57213},{"n":"Ferretería La guama","m":"San Francisco de Yojoa","d":"Cortés","t":"cliente_actual","s":"","c":true,"rtn":"0501-9022-41322-9","tel":"","p":"yahaira sanchez","f":"2026-03-25","fo":1,"ga":0,"lat":null,"lon":null},{"n":"Ferreteria Salomon","m":"Santiago de Puringla","d":"La Paz","t":"cliente_actual","s":"","c":true,"rtn":"1218196700226","tel":"","p":"","f":"2026-03-26","fo":2,"ga":0,"lat":14.35619,"lon":-87.90524},{"n":"Comercial y Ferretería Las Gemelas","m":"Ajuterique","d":"Comayagua","t":"cliente_actual","s":"","c":true,"rtn":"0302-1979-00073-1","tel":"50496449294","p":"Wilfredo Marquez","f":"2026-01-21","fo":3,"ga":0,"lat":14.42639,"lon":-87.70078},{"n":"Ferretería Evelyn","m":"Ajuterique","d":"Comayagua","t":"prospecto","s":"","c":true,"rtn":"0501-1989-05142-3","tel":"50495242424","p":"Evelyn Medina","f":"2026-01-21","fo":3,"ga":0,"lat":null,"lon":null},{"n":"Agrocomercial Vasquez","m":"Siguatepeque","d":"Comayagua","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"1217198300228","tel":"50496510619","p":"Del mercado Exuardo Garcia Vasquez","f":"2025-12-22","fo":5,"ga":0,"lat":14.59257,"lon":-87.83681},{"n":"Casa Ferretería Lagos","m":"Siguatepeque","d":"Comayagua","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"03181980000412","tel":"50497964784","p":"Alexis David Lagos Granados","f":"2025-12-22","fo":5,"ga":0,"lat":14.58945,"lon":-87.8936},{"n":"FERRETERIA LOS AMIGOS","m":"Corquín","d":"Copán","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"0401-1978-00727-4","tel":"50495402120","p":"Miguel angel Alvarado romero","f":"2026-07-24","fo":1,"ga":1,"lat":14.57076,"lon":-88.87144},{"n":"Ferretería Santa María","m":"La Libertad","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"0306-1955-00167-8","tel":"504+504 9749-3145","p":"María Caballero","f":"2026-01-23","fo":3,"ga":0,"lat":14.75781,"lon":-87.61242},{"n":"Comercial y Ferretería Caballero","m":"La Libertad","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"0306-1985-00996-5","tel":"504+504 9913-9077","p":"Katia Caballero","f":"2026-01-23","fo":3,"ga":0,"lat":14.75824,"lon":-87.61013},{"n":"INVERSIONES SAGRADO CORAZON","m":"Sinuapa","d":"Ocotepeque","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"1416-1951-00063-0","tel":"50497367625","p":"José huberto Villeda villeda","f":"2026-04-27","fo":1,"ga":1,"lat":14.44318,"lon":-89.19819},{"n":"Ferreteria Villa Napoles","m":"San José de Comayagua","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"0318-1984-02608-9","tel":"504+504 3389-5159","p":"Nahum Osorio","f":"2026-01-30","fo":3,"ga":0,"lat":14.77364,"lon":-87.96326},{"n":"FERRETERIA LOS PROFESIONALES","m":"San Manuel Colohete","d":"Lempira","t":"cliente_actual","s":"","c":false,"rtn":"1301-1994-00586-3","tel":"50495105974","p":"cristian hernan","f":"2026-04-22","fo":0,"ga":0,"lat":14.41271,"lon":-88.60411},{"n":"Ferretería Cayaguanca","m":"Siguatepeque","d":"Comayagua","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"03181966002533","tel":"50496218953","p":"Armando Enrrique Fiallos Orellana","f":"2025-12-22","fo":3,"ga":0,"lat":14.59407,"lon":-87.82875},{"n":"Agroferreteria La Otoreña","m":"Jesús de Otoro","d":"Intibucá","t":"sin_dato","s":"Mayorista","c":false,"rtn":"10071962002423","tel":"50499365349","p":"Sergio Muñoz","f":"2026-01-12","fo":3,"ga":0,"lat":null,"lon":null},{"n":"Kalin Comercial","m":"Taulabé","d":"Comayagua","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"03181976012899","tel":"50488774717","p":"Carlos Alberto Cruz Maldonado","f":"2025-12-23","fo":4,"ga":0,"lat":14.69494,"lon":-87.96348},{"n":"Femarca","m":"Taulabé","d":"Comayagua","t":"sin_dato","s":"Mayorista","c":false,"rtn":"03211996005499","tel":"50432490499","p":"Carlos David Portales Sorto","f":"2025-12-23","fo":4,"ga":0,"lat":14.74785,"lon":-87.9593},{"n":"Agrocomercial los amigos","m":"San Vicente Centenario","d":"Santa Bárbara","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"1601-1979-00259-8","tel":"50497773256","p":"Manuel Alvarado","f":"2026-05-26","fo":2,"ga":12,"lat":14.89433,"lon":-88.28323},{"n":"Comercial y Ferretería Flores","m":"La Trinidad","d":"Comayagua","t":"prospecto","s":"Mayorista","c":false,"rtn":"0306-1977-00525-8","tel":"5049685-6812","p":"Ena Flores","f":"2026-01-23","fo":3,"ga":0,"lat":14.7599,"lon":-87.60927},{"n":"FERRETERIA MENHER","m":"San Jerónimo","d":"Comayagua","t":"cliente_actual","s":"","c":true,"rtn":"0313-2001-00018-7","tel":"50499107688","p":"Evir Mendoza","f":"2026-10-12","fo":0,"ga":0,"lat":14.45775,"lon":-87.62694},{"n":"Comercial Ferreteria Argueta","m":"Intibucá","d":"Intibucá","t":"cliente_actual","s":"","c":true,"rtn":"1203-1974-00064-3","tel":"50498069578","p":"paulino argueta","f":"2026-03-03","fo":1,"ga":0,"lat":14.31023,"lon":-88.17395},{"n":"Comercial y Ferretería Pereira","m":"Marcala","d":"La Paz","t":"prospecto","s":"Mayorista","c":true,"rtn":"0501-1984-04695-2","tel":"504+504 9770-6491","p":"Julio Pereira","f":"2026-01-19","fo":0,"ga":0,"lat":14.15231,"lon":-88.03357},{"n":"Ferretería La Casona","m":"Siguatepeque","d":"Comayagua","t":"sin_dato","s":"Pequeño Ferretero","c":false,"rtn":"05011968063850","tel":"","p":"Carlos Javier Pineda","f":"2025-12-22","fo":3,"ga":0,"lat":14.59849,"lon":-87.84004},{"n":"Inversiones Sael","m":"Belén","d":"Lempira","t":"sin_dato","s":"Mayorista","c":false,"rtn":"0000000","tel":"50494931993","p":"Elvis Becerra","f":"2026-01-13","fo":3,"ga":0,"lat":null,"lon":null},{"n":"AGROCOMERCIAL FERRETERO EBEN-EZER S. DE R.L DE C.V","m":"San Marcos","d":"Ocotepeque","t":"cliente_actual","s":"Mayorista","c":false,"rtn":"1413-9015-70638-5","tel":"50495931618","p":"rudesman reyes","f":"2026-09-07","fo":1,"ga":1,"lat":14.42217,"lon":-88.95226},{"n":"Comercial y Ferreteria Norita","m":"Marcala","d":"La Paz","t":"cliente_actual","s":"","c":false,"rtn":"1208-1979-00371-4","tel":"50499214000","p":"Nora suazo","f":"2026-05-26","fo":0,"ga":0,"lat":14.15497,"lon":-88.03376},{"n":"Electric Comercial Ferretero","m":"San Marcos","d":"Ocotepeque","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"1307-1983-00029-6","tel":"50498161227","p":"javier valle","f":"2026-10-01","fo":1,"ga":1,"lat":14.80033,"lon":-88.77169},{"n":"Agroferr Valle Bonito","m":"La Libertad","d":"Comayagua","t":"prospecto","s":"Mayorista","c":true,"rtn":"0306-1976-00478-7","tel":"504+504 9976-4818","p":"Wilberto Romero","f":"2026-01-22","fo":3,"ga":0,"lat":14.86198,"lon":-87.53067},{"n":"LA CASA DE LA CERAMICA","m":"Siguatepeque","d":"Comayagua","t":"cliente_actual","s":"","c":true,"rtn":"1601-1972-00936-2","tel":"","p":"Marvin Trochez","f":"2026-10-12","fo":1,"ga":0,"lat":14.45776,"lon":-87.62695},{"n":"ferreteria los 3 hermanos","m":"Siguatepeque","d":"Comayagua","t":"prospecto","s":"Pequeño Ferretero","c":false,"rtn":"050119882233","tel":"","p":"JUAN VILLANUEVA","f":"2026-01-15","fo":0,"ga":7,"lat":14.44057,"lon":-87.83109},{"n":"INSHA / Inmobiliaria y soluciones habitacionales","m":"Intibucá","d":"Intibucá","t":"prospecto","s":"","c":true,"rtn":"1001-1990-00172-9","tel":"50499490223","p":"delis lopez","f":"","fo":2,"ga":0,"lat":14.31678,"lon":-88.15817},{"n":"Ferretería Victor Castellanos","m":"Siguatepeque","d":"Comayagua","t":"sin_dato","s":"Mayorista","c":false,"rtn":"16011990003689","tel":"50433115243","p":"Victor Alfonso Castellanos","f":"2025-12-22","fo":4,"ga":0,"lat":14.59841,"lon":-87.83488},{"n":"INVERSIONES TRUENO","m":"La Esperanza","d":"Intibucá","t":"cliente_actual","s":"","c":false,"rtn":"1006-1993-01108-3","tel":"50497000049","p":"walter sanchez","f":"2026-04-27","fo":0,"ga":0,"lat":14.45483,"lon":-87.64143},{"n":"Comercial García","m":"Marcala","d":"La Paz","t":"prospecto","s":"Mayorista","c":false,"rtn":"0501-1986-07210-2","tel":"50496294111","p":"Humberto García","f":"2026-01-19","fo":0,"ga":0,"lat":14.15441,"lon":-88.0335},{"n":"Comercial HH","m":"Santa María","d":"La Paz","t":"prospecto","s":"","c":false,"rtn":"1217-1973-00143-4","tel":"50469280117","p":"Francisco Hernández","f":"2026-01-20","fo":1,"ga":0,"lat":14.28915,"lon":-87.93541},{"n":"Comercial y Ferretería Emanuel","m":"San Luis","d":"Comayagua","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"0","tel":"","p":"","f":"2026-01-22","fo":3,"ga":0,"lat":14.75125,"lon":-87.40863},{"n":"COMIXLENL","m":"La Unión","d":"Lempira","t":"cliente_actual","s":"","c":false,"rtn":"1311-1998-00360-9","tel":"50496061605","p":"jose jairo","f":"2026-04-27","fo":0,"ga":0,"lat":50.1317,"lon":-9.99118},{"n":"FERRECAST S. DE R.L DE C.V","m":"Taulabé","d":"Comayagua","t":"cliente_actual","s":"","c":true,"rtn":"0321-9024-05968-6","tel":"","p":"","f":"","fo":0,"ga":0,"lat":14.68792,"lon":-87.49558},{"n":"Inversiones y transportes Morales","m":"Taulabé","d":"Comayagua","t":"cliente_actual","s":"Pequeño Ferretero","c":true,"rtn":"0318-1975-00704-5","tel":"50496876760","p":"","f":"2026-04-24","fo":1,"ga":0,"lat":14.6949,"lon":-87.96642},{"n":"Ferreteria Bacamotos","m":"Taulabé","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"0318-1987-00761-9","tel":"504+504 8885-1259","p":"Ruben Osorio","f":"2026-01-30","fo":3,"ga":0,"lat":14.77444,"lon":-87.94948},{"n":"FERRETERIA SANTA FE","m":"San Jerónimo","d":"Copán","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"0416-1977-00094-4","tel":"50497935044","p":"Fredi Antonio arita lemuz","f":"2026-08-26","fo":1,"ga":1,"lat":14.9847,"lon":-88.86271},{"n":"FERRETERIA NAZARETH S DE RL","m":"Gracias","d":"Lempira","t":"cliente_actual","s":"","c":false,"rtn":"1301-9016-84368-2","tel":"50499379959","p":"vilma","f":"2026-04-23","fo":0,"ga":0,"lat":14.60516,"lon":-88.58303},{"n":"Ferrecarmen","m":"Siguatepeque","d":"Comayagua","t":"prospecto","s":"","c":false,"rtn":"2141541351351","tel":"","p":"","f":"","fo":0,"ga":5,"lat":14.58888,"lon":-87.81283},{"n":"hola","m":"Limón","d":"Colón","t":"prospecto","s":"Pequeño Ferretero","c":true,"rtn":"1234","tel":"50476768728783","p":"Elvis Cantarero","f":"2026-04-25","fo":0,"ga":0,"lat":14.31461,"lon":-88.15735},{"n":"Ferretería Lajas","m":"Las Lajas","d":"Comayagua","t":"cliente_actual","s":"Mayorista","c":true,"rtn":"0320-1995-00158-7","tel":"50495424895","p":"Sania Doblado","f":"2026-01-23","fo":3,"ga":0,"lat":14.89345,"lon":-87.5749},{"n":"Ferretería San Antonio","m":"Masaguara","d":"Intibucá","t":"prospecto","s":"","c":true,"rtn":"1009-1989-00547-5","tel":"50496683316","p":"marjorie cardona","f":"2026-02-26","fo":0,"ga":0,"lat":14.39121,"lon":-87.97045},{"n":"inversiones Hernandez Diaz","m":"El Níspero","d":"Santa Bárbara","t":"cliente_actual","s":"Pequeño Ferretero","c":false,"rtn":"1306-1997-00417-2","tel":"50496876463","p":"Esli Diaz","f":"2026-05-27","fo":2,"ga":15,"lat":14.76893,"lon":-88.33331}];
+const GEO = {"Nicaragua":[[[[-85.7007,11.081],[-85.7871,11.1131],[-85.9275,11.3106],[-86.4963,11.7598],[-86.6907,12.0249],[-86.7735,12.1972],[-87.1695,12.4521],[-87.1731,12.4741],[-87.0975,12.4336],[-87.3315,12.6396],[-87.3459,12.6193],[-87.4791,12.8],[-87.5223,12.8169],[-87.4935,12.7713],[-87.6699,12.8928],[-87.6663,12.9823],[-87.5763,13.0853],[-87.5835,13.0566],[-87.5115,13.0229],[-87.4359,12.9216],[-87.2883,12.9199],[-87.3783,12.9367],[-87.3135,12.9823],[-87.0363,12.979],[-86.9247,13.087],[-86.9103,13.239],[-86.8491,13.2897],[-86.7483,13.261],[-86.7051,13.2981],[-86.7411,13.3825],[-86.7231,13.4399],[-86.7735,13.6459],[-86.7663,13.7456],[-86.5431,13.7827],[-86.4099,13.749],[-86.3235,13.7642],[-86.2839,13.8452],[-86.0967,14.0445],[-86.0211,14.0546],[-86.0283,13.9955],[-85.9311,13.9127],[-85.8843,13.9144],[-85.8231,13.8469],[-85.7403,13.8249],[-85.7331,13.96],[-85.5279,14.0512],[-85.3227,14.2809],[-85.1679,14.3214],[-85.1607,14.3619],[-85.2075,14.4075],[-85.1535,14.4852],[-85.1463,14.5645],[-85.0851,14.5443],[-85.0311,14.5882],[-85.0491,14.6051],[-85.0203,14.6338],[-85.0527,14.6625],[-85.0167,14.7283],[-84.905,14.8161],[-84.7934,14.8212],[-84.6998,14.6743],[-84.527,14.6608],[-84.5342,14.6338],[-84.4838,14.6203],[-84.4082,14.649],[-84.3614,14.7148],[-84.3398,14.6743],[-84.2678,14.6777],[-84.2606,14.7587],[-84.167,14.7148],[-84.095,14.7368],[-84.113,14.7942],[-84.041,14.7604],[-83.9258,14.7638],[-83.9258,14.8043],[-83.8682,14.7773],[-83.7998,14.8043],[-83.8214,14.8263],[-83.7062,14.8381],[-83.6918,14.8871],[-83.6162,14.8719],[-83.6054,14.909],[-83.5262,14.9478],[-83.5082,15.012],[-83.4578,14.9833],[-83.3894,15.0306],[-83.267,14.9833],[-83.1302,14.9968],[-83.1914,14.9749],[-83.2922,14.8043],[-83.3282,14.7908],[-83.3282,14.8313],[-83.2886,14.8263],[-83.321,14.9141],[-83.4254,14.8043],[-83.3966,14.8077],[-83.339,14.7317],[-83.321,14.7503],[-83.357,14.7705],[-83.3138,14.7503],[-83.2994,14.7705],[-83.1878,14.3484],[-83.2202,14.2505],[-83.4326,13.9566],[-83.5586,13.4163],[-83.5694,13.2424],[-83.5082,12.903],[-83.5406,12.5805],[-83.483,12.4167],[-83.6378,12.3863],[-83.6018,12.4133],[-83.6378,12.5653],[-83.5874,12.5602],[-83.5622,12.5906],[-83.5406,12.7696],[-83.5622,12.8135],[-83.645,12.7865],[-83.5874,12.6328],[-83.7746,12.5332],[-83.7746,12.4808],[-83.7278,12.469],[-83.735,12.3626],[-83.6774,12.3424],[-83.6774,12.2799],[-83.6486,12.3525],[-83.6162,12.3474],[-83.6846,12.1381],[-83.6702,11.9878],[-83.7242,12.0739],[-83.6918,12.1178],[-83.7098,12.1549],[-83.7782,12.1769],[-83.7134,12.1262],[-83.7386,12.0519],[-83.8034,12.0604],[-83.7602,12.035],[-83.7602,11.9405],[-83.8358,11.8713],[-83.7674,11.8054],[-83.7422,11.8054],[-83.735,11.8544],[-83.699,11.8493],[-83.6522,11.6112],[-83.7602,11.5572],[-83.7926,11.444],[-83.8214,11.4474],[-83.8682,11.3748],[-83.8682,11.2735],[-83.753,10.9831],[-83.7098,10.9223],[-83.645,10.9257],[-83.6702,10.9223],[-83.663,10.8075],[-83.9186,10.7129],[-84.0086,10.7889],[-84.077,10.7635],[-84.1922,10.7821],[-84.2282,10.8193],[-84.2066,10.8615],[-84.311,10.9189],[-84.3542,10.9949],[-84.437,10.9527],[-84.6782,11.0709],[-84.9302,10.9425],[-85.5099,11.1519],[-85.5963,11.2093],[-85.7007,11.081]]]],"El Salvador":[[[[-90.0999,13.7321],[-90.1071,13.8435],[-90.0099,13.9499],[-89.8371,14.0597],[-89.7615,14.0293],[-89.6895,14.1694],[-89.5239,14.2319],[-89.5995,14.3281],[-89.5851,14.4024],[-89.5419,14.3822],[-89.3979,14.4446],[-89.1531,14.3518],[-89.1063,14.3957],[-88.9659,14.1914],[-88.8795,14.1846],[-88.8399,14.1002],[-88.7463,14.112],[-88.7463,14.0529],[-88.6923,14.0107],[-88.4943,13.9752],[-88.4979,13.852],[-88.2855,13.906],[-88.2351,13.9381],[-88.2459,13.9887],[-88.1271,13.9921],[-88.0875,13.9803],[-88.0155,13.8672],[-87.8175,13.9161],[-87.7023,13.8148],[-87.7887,13.5328],[-87.7347,13.5075],[-87.7203,13.4602],[-87.8175,13.4062],[-87.8391,13.4416],[-87.8751,13.3656],[-87.7887,13.2863],[-87.9291,13.158],[-88.3251,13.1664],[-88.3539,13.1748],[-88.3287,13.1968],[-88.3575,13.2289],[-88.3395,13.1951],[-88.4151,13.1715],[-88.4403,13.2086],[-88.4151,13.2204],[-88.4619,13.2626],[-88.4547,13.2154],[-88.5987,13.2846],[-88.7211,13.2694],[-88.5771,13.2626],[-88.5375,13.2204],[-88.5987,13.2289],[-88.4727,13.1985],[-88.4619,13.1681],[-88.7859,13.2458],[-89.2503,13.472],[-89.6787,13.5345],[-89.8083,13.5261],[-89.8479,13.6071],[-90.0999,13.7321]]]],"Guatemala":[[[[-89.3619,14.4159],[-89.3979,14.4446],[-89.5419,14.3822],[-89.5851,14.4024],[-89.5995,14.3281],[-89.5239,14.2319],[-89.6895,14.1694],[-89.7615,14.0293],[-89.8371,14.0597],[-90.0099,13.9499],[-90.1071,13.8435],[-90.0999,13.7321],[-90.5787,13.9127],[-91.0431,13.9127],[-91.3167,13.955],[-91.7631,14.1795],[-92.2455,14.546],[-92.1591,14.6827],[-92.1915,14.8347],[-92.1555,14.9006],[-92.1555,14.9951],[-92.0727,15.0745],[-92.2023,15.2366],[-92.2059,15.2889],[-91.7415,16.0606],[-90.4851,16.0707],[-90.4347,16.1079],[-90.4599,16.1163],[-90.4275,16.1636],[-90.4671,16.2075],[-90.4347,16.2362],[-90.4599,16.2599],[-90.4131,16.2886],[-90.4455,16.3088],[-90.4059,16.3308],[-90.4167,16.3679],[-90.3807,16.3679],[-90.3951,16.4186],[-90.4743,16.4304],[-90.5427,16.4895],[-90.6327,16.4828],[-90.6111,16.5081],[-90.6471,16.53],[-90.6327,16.5925],[-90.6687,16.5875],[-90.6687,16.6533],[-90.7983,16.8053],[-90.9207,16.8357],[-90.9675,16.8745],[-90.9567,16.8981],[-90.9927,16.8745],[-91.0539,16.9083],[-91.2807,17.1801],[-91.4427,17.2376],[-90.9927,17.2528],[-90.9819,17.81],[-89.1603,17.815],[-89.1495,17.0366],[-89.2359,15.8934],[-88.9155,15.8934],[-88.7859,15.8597],[-88.6275,15.7533],[-88.6383,15.7094],[-88.6095,15.7026],[-88.5519,15.7989],[-88.5591,15.8529],[-88.4871,15.8462],[-88.6203,15.9525],[-88.6059,15.9694],[-88.2207,15.7263],[-88.9731,15.1403],[-89.1603,15.061],[-89.1891,14.9968],[-89.1675,14.9512],[-89.2323,14.8668],[-89.1459,14.7114],[-89.1603,14.5814],[-89.2467,14.573],[-89.3547,14.475],[-89.3619,14.4159]]]],"Honduras":[[[[-89.3619,14.4159],[-89.3547,14.475],[-89.3223,14.4869],[-89.2467,14.573],[-89.1711,14.5696],[-89.1603,14.5814],[-89.1459,14.7114],[-89.2323,14.8482],[-89.2251,14.8786],[-89.1675,14.9512],[-89.1675,14.9782],[-89.1891,14.9968],[-89.1603,15.061],[-88.9731,15.1403],[-88.4007,15.5726],[-88.3179,15.6739],[-88.2423,15.6874],[-88.2207,15.7263],[-88.1451,15.6841],[-88.1199,15.6959],[-88.0371,15.7702],[-88.0407,15.7871],[-87.9939,15.7854],[-87.9327,15.8191],[-87.9255,15.8428],[-87.9507,15.8664],[-87.7599,15.9002],[-87.7239,15.9222],[-87.6267,15.8884],[-87.6375,15.9036],[-87.5907,15.9357],[-87.6159,15.8951],[-87.4791,15.7854],[-87.3459,15.8495],[-87.1515,15.7972],[-86.9175,15.76],[-86.7987,15.7854],[-86.7699,15.8073],[-86.6979,15.7888],[-86.4711,15.804],[-86.3739,15.7702],[-86.1723,15.8867],[-85.9707,15.9086],[-85.9023,15.9829],[-85.9203,16.0032],[-86.0139,16.0201],[-86.0067,16.0319],[-85.7043,15.9762],[-85.6863,15.9357],[-85.6575,15.9492],[-85.6071,15.907],[-85.4883,15.8698],[-85.2543,15.8833],[-85.0743,15.9863],[-84.9986,15.988],[-84.6782,15.8766],[-84.6638,15.8664],[-84.6818,15.7938],[-84.6602,15.7752],[-84.617,15.7803],[-84.6098,15.809],[-84.5738,15.7837],[-84.4766,15.7786],[-84.4514,15.7955],[-84.5774,15.8225],[-84.6422,15.8631],[-84.293,15.8107],[-83.8934,15.4848],[-83.7998,15.4291],[-83.735,15.4105],[-83.7278,15.3936],[-83.7494,15.3869],[-83.861,15.4494],[-83.9078,15.4527],[-83.9186,15.4629],[-83.9042,15.4696],[-83.9474,15.5186],[-83.9654,15.5118],[-84.005,15.5372],[-84.0554,15.5101],[-84.0878,15.5253],[-84.0698,15.549],[-84.1022,15.5507],[-84.077,15.4899],[-84.0878,15.4831],[-84.131,15.5507],[-84.2138,15.5507],[-84.1814,15.5152],[-84.185,15.4831],[-84.1454,15.5355],[-84.1274,15.5321],[-84.0914,15.451],[-84.1238,15.4308],[-84.0842,15.3599],[-84.0338,15.3413],[-84.0338,15.3801],[-84.0086,15.3565],[-84.0014,15.3092],[-83.933,15.3109],[-83.9582,15.2923],[-83.9222,15.2484],[-83.8826,15.245],[-83.8214,15.2704],[-83.8934,15.3227],[-84.0014,15.3599],[-84.0338,15.4004],[-83.9942,15.4223],[-83.9042,15.3835],[-83.8718,15.343],[-83.8142,15.321],[-83.7962,15.2974],[-83.8142,15.2788],[-83.7746,15.2856],[-83.7602,15.2028],[-83.7458,15.2231],[-83.7314,15.2028],[-83.6918,15.2467],[-83.6342,15.2569],[-83.6234,15.2957],[-83.5262,15.2839],[-83.5334,15.2113],[-83.5442,15.2045],[-83.5658,15.2315],[-83.591,15.2366],[-83.6234,15.1961],[-83.6198,15.1758],[-83.6018,15.1826],[-83.609,15.2028],[-83.5946,15.2096],[-83.5874,15.1674],[-83.573,15.1606],[-83.483,15.2163],[-83.5298,15.3008],[-83.609,15.3041],[-83.609,15.3261],[-83.7242,15.3751],[-83.7026,15.4021],[-83.5442,15.316],[-83.4074,15.267],[-83.357,15.2298],[-83.285,15.0677],[-83.1302,14.9968],[-83.267,14.9833],[-83.285,14.9917],[-83.2742,15.0036],[-83.3498,14.9968],[-83.3894,15.0306],[-83.4146,14.9968],[-83.4578,14.9833],[-83.5082,15.012],[-83.5118,14.9681],[-83.5298,14.9732],[-83.5262,14.9478],[-83.5478,14.9546],[-83.5406,14.9411],[-83.6054,14.909],[-83.6162,14.8719],[-83.6486,14.8887],[-83.6918,14.8871],[-83.7134,14.8668],[-83.7062,14.8381],[-83.735,14.8533],[-83.7638,14.828],[-83.8214,14.8263],[-83.7998,14.8043],[-83.8682,14.7773],[-83.9258,14.8043],[-83.9258,14.7638],[-84.041,14.7604],[-84.113,14.7942],[-84.1238,14.7841],[-84.095,14.7368],[-84.167,14.7148],[-84.2606,14.7587],[-84.2678,14.6777],[-84.3398,14.6743],[-84.3614,14.7148],[-84.4082,14.649],[-84.4838,14.6203],[-84.5342,14.6338],[-84.527,14.6608],[-84.6818,14.6861],[-84.6998,14.6743],[-84.7466,14.7385],[-84.7466,14.7638],[-84.7682,14.7672],[-84.7538,14.7807],[-84.7934,14.8212],[-84.905,14.8161],[-85.0167,14.7283],[-85.0347,14.6692],[-85.0527,14.6625],[-85.0203,14.6338],[-85.0491,14.6051],[-85.0239,14.6051],[-85.0311,14.5882],[-85.0851,14.5443],[-85.1211,14.5747],[-85.1463,14.5645],[-85.1535,14.4852],[-85.1787,14.4548],[-85.1787,14.4278],[-85.2075,14.4075],[-85.1607,14.3619],[-85.1679,14.3214],[-85.3227,14.2809],[-85.3839,14.2268],[-85.4307,14.1323],[-85.5099,14.0934],[-85.5279,14.0512],[-85.5927,14.0326],[-85.6467,13.9989],[-85.6503,13.982],[-85.7331,13.96],[-85.7475,13.8891],[-85.7223,13.8638],[-85.7403,13.8249],[-85.8231,13.8469],[-85.8843,13.9144],[-85.9311,13.9127],[-86.0283,13.9955],[-86.0211,14.0546],[-86.1219,14.0276],[-86.1363,13.9955],[-86.1831,13.9668],[-86.2839,13.8452],[-86.3235,13.7642],[-86.4099,13.749],[-86.4495,13.7726],[-86.4891,13.7591],[-86.5431,13.7827],[-86.7267,13.7675],[-86.7627,13.749],[-86.7735,13.6459],[-86.7519,13.624],[-86.7555,13.5598],[-86.7231,13.4399],[-86.7411,13.3825],[-86.7087,13.3488],[-86.7051,13.2981],[-86.7483,13.261],[-86.8167,13.2913],[-86.8491,13.2897],[-86.9103,13.239],[-86.9355,13.185],[-86.9247,13.087],[-87.0363,12.979],[-87.0831,12.9958],[-87.3135,12.9823],[-87.2703,13.0296],[-87.3171,13.0347],[-87.3531,13.0718],[-87.3495,13.0887],[-87.3027,13.0989],[-87.4179,13.1107],[-87.4539,13.2238],[-87.5115,13.2863],[-87.4395,13.3589],[-87.3783,13.3724],[-87.3999,13.4112],[-87.4467,13.4197],[-87.4755,13.3927],[-87.4827,13.3589],[-87.5475,13.3555],[-87.5583,13.3656],[-87.5439,13.3724],[-87.5799,13.3825],[-87.6195,13.3724],[-87.6051,13.4062],[-87.6231,13.4231],[-87.6231,13.467],[-87.6591,13.4416],[-87.6519,13.4129],[-87.6915,13.3656],[-87.7383,13.3623],[-87.8175,13.4062],[-87.7203,13.4602],[-87.7347,13.5075],[-87.7707,13.5058],[-87.7887,13.5328],[-87.7599,13.6172],[-87.7563,13.6899],[-87.7347,13.7118],[-87.7383,13.7388],[-87.7023,13.8148],[-87.7923,13.8705],[-87.8175,13.9161],[-87.8607,13.8908],[-87.9003,13.8942],[-87.9255,13.879],[-87.9543,13.8925],[-88.0155,13.8672],[-88.0983,13.9904],[-88.2351,13.9921],[-88.2459,13.9887],[-88.2351,13.9381],[-88.2639,13.933],[-88.2855,13.906],[-88.3251,13.8857],[-88.3539,13.8908],[-88.3611,13.8722],[-88.3935,13.879],[-88.4979,13.852],[-88.4871,13.8655],[-88.5015,13.9178],[-88.4943,13.9752],[-88.6347,14.0141],[-88.6923,14.0107],[-88.6959,14.0326],[-88.7463,14.0529],[-88.7463,14.112],[-88.8399,14.1002],[-88.8795,14.1846],[-88.9047,14.1998],[-88.9659,14.1914],[-88.9731,14.2268],[-89.0199,14.2724],[-89.0343,14.3231],[-89.0955,14.345],[-89.0883,14.3653],[-89.1063,14.3957],[-89.1315,14.3872],[-89.1531,14.3518],[-89.3619,14.4159]]],[[[-86.8779,16.1265],[-86.8779,16.0927],[-86.9643,16.0657],[-86.9967,16.0843],[-86.9427,16.1163],[-86.8779,16.1265]]],[[[-86.6079,16.2852],[-86.5719,16.3325],[-86.4387,16.3966],[-86.3307,16.4287],[-86.1831,16.4287],[-86.2227,16.4118],[-86.3199,16.4102],[-86.5467,16.3122],[-86.6007,16.27],[-86.6079,16.2852]]],[[[-85.9131,16.4625],[-85.8843,16.503],[-85.8519,16.5165],[-85.8159,16.498],[-85.9455,16.4034],[-85.9131,16.4625]]]],"Belize":[[[[-89.1603,17.815],[-89.1531,17.9417],[-89.0487,17.9991],[-88.8723,17.891],[-88.7355,18.0514],[-88.6959,18.1781],[-88.6167,18.2355],[-88.5339,18.4432],[-88.4907,18.4837],[-88.2855,18.4635],[-88.3899,18.3706],[-88.3179,18.3757],[-88.3575,18.303],[-88.2747,18.3588],[-88.1955,18.3402],[-88.0911,18.3723],[-88.1451,18.3199],[-88.0911,18.3284],[-88.0947,18.1021],[-88.2099,17.8826],[-88.2135,17.7728],[-88.2891,17.604],[-88.1667,17.5128],[-88.2423,17.4875],[-88.2855,17.3389],[-88.2999,17.1785],[-88.2135,16.9674],[-88.2783,16.9066],[-88.2459,16.8188],[-88.3035,16.7614],[-88.3431,16.525],[-88.3611,16.5064],[-88.3107,16.6617],[-88.3863,16.5587],[-88.3647,16.552],[-88.3935,16.552],[-88.3863,16.4912],[-88.5375,16.2717],[-88.5771,16.2447],[-88.5771,16.2852],[-88.6059,16.2599],[-88.6383,16.2886],[-88.7391,16.2295],[-88.7535,16.14],[-88.9263,15.9846],[-88.9155,15.8934],[-88.9515,15.8799],[-89.2359,15.8934],[-89.1495,17.0366],[-89.1603,17.815]]],[[[-87.8283,17.5449],[-87.7815,17.5128],[-87.8319,17.4233],[-87.9003,17.3912],[-87.9255,17.2781],[-87.9111,17.4267],[-87.8103,17.4723],[-87.8283,17.5449]]],[[[-87.9147,18.0261],[-87.9363,17.9434],[-88.0083,17.9029],[-87.9471,17.9518],[-87.9039,18.1528],[-87.8571,18.1696],[-87.9255,17.9974],[-87.9147,18.0261]]]]};
+const MESES = [{"et":"oct 25","largo":"octubre de 2025","nom":"105-NAHUM.F","vend":"nahum","v":223785.66,"u":26870.67,"mg":12.5,"f":7},{"et":"nov 25","largo":"noviembre de 2025","nom":"105-NAHUM.F","vend":"nahum","v":324992.46,"u":55536.11,"mg":17.4,"f":19},{"et":"dic 25","largo":"diciembre de 2025","nom":"105-NAHUM.F","vend":"nahum","v":667292.16,"u":144062.69,"mg":23.1,"f":50},{"et":"ene 26","largo":"enero de 2026","nom":"105-NAHUM.F","vend":"nahum","v":643771.49,"u":162142.5,"mg":26.0,"f":51},{"et":"feb 26","largo":"febrero de 2026","nom":"105-NAHUM.F","vend":"nahum","v":909043.44,"u":134092.18,"mg":15.2,"f":62},{"et":"mar 26","largo":"marzo de 2026","nom":"105-NAHUM.F","vend":"nahum","v":1007083.95,"u":138806.38,"mg":14.2,"f":57},{"et":"abr 26","largo":"abril de 2026","nom":"105-NAHUM.F","vend":"nahum","v":1078.74,"u":62.23,"mg":5.8,"f":1},{"et":"may 26","largo":"mayo de 2026","nom":"116-JOSE.A","vend":"jose","v":936988.06,"u":123602.22,"mg":13.4,"f":17},{"et":"jun 26","largo":"junio de 2026","nom":"116-JOSE.A","vend":"jose","v":1234717.53,"u":190226.74,"mg":15.4,"f":29},{"et":"jul 26","largo":"julio de 2026","nom":"116-JOSE.A","vend":"jose","v":1213799.51,"u":213952.81,"mg":17.9,"f":41},{"et":"ago 26","largo":"agosto de 2026","nom":"116-JOSE.A","vend":"jose","v":1363715.88,"u":226637.04,"mg":16.6,"f":33},{"et":"sep 26","largo":"septiembre de 2026","nom":"116-JOSE.A","vend":"jose","v":1000252.43,"u":178892.47,"mg":18.0,"f":31}];
+const PRESETS = {
+  jose:  {sal:13000, car:1.35, via:20741.10, cic:1, ven:1149894.68, mar:16.4, fac:30.2},
+  nahum: {sal:13000, car:1.35, via:20741.10, cic:1, ven:539578.27,  mar:18.2, fac:35.3},
+  ruta:  {sal:13000, car:1.35, via:20741.10, cic:1, ven:0,          mar:16.4, fac:0}
+};
+const VIA_HOTEL = 14360.00, VIA_COMB = 6381.10, VIA_TOT = 20741.10;
+
+const L = n => n.toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const L0 = n => n.toLocaleString('es-HN',{maximumFractionDigits:0});
+const COL = {cliente_actual:'var(--s1)', prospecto:'var(--s2)', sin_dato:'var(--s3)'};
+const NOM = {cliente_actual:'cliente actual', prospecto:'prospecto', sin_dato:'sin clasificar'};
+const CLS = {cliente_actual:'cli', prospecto:'pro', sin_dato:'sd'};
+
+/* ---------------- proyección ---------------- */
+const K = Math.cos(14.8*Math.PI/180);
+const px = lon => lon*K, py = lat => -lat;
+const dentro = p => p.lat!==null && p.lon>-89.6 && p.lon<-82.9 && p.lat>12.8 && p.lat<16.7;
+const UBIC = PUNTOS.filter(dentro);
+const SINGPS = PUNTOS.filter(p=>p.lat===null);
+const MALGPS = PUNTOS.filter(p=>p.lat!==null && !dentro(p));
+
+function bbox(pts){
+  const xs=pts.map(p=>px(p.lon)), ys=pts.map(p=>py(p.lat));
+  return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
+}
+function bboxGeo(polys){
+  let a=1e9,b=1e9,c=-1e9,d=-1e9;
+  polys.forEach(poly=>poly.forEach(ring=>ring.forEach(([lo,la])=>{
+    const x=px(lo), y=py(la);
+    if(x<a)a=x; if(y<b)b=y; if(x>c)c=x; if(y>d)d=y;
+  })));
+  return [a,b,c,d];
+}
+function vb(bb,padFrac){
+  const w=bb[2]-bb[0], h=bb[3]-bb[1], p=Math.max(w,h)*padFrac;
+  let x=bb[0]-p, y=bb[1]-p, W=w+2*p, H=h+2*p;
+  const ar=16/9;                                    // forma del lienzo
+  if(W/H < ar){ const nW=H*ar; x-=(nW-W)/2; W=nW; } else { const nH=W/ar; y-=(nH-H)/2; H=nH; }
+  return {x,y,W,H};
+}
+const VIEWS = {
+  zona: vb(bbox(UBIC), 0.10),
+  pais: vb(bboxGeo(GEO['Honduras']), 0.04)
+};
+
+/* ---------------- dibujo del mapa ---------------- */
+const map = document.getElementById('map');
+const tip = document.getElementById('tip');
+const NS='http://www.w3.org/2000/svg';
+let vista='zona', sel=null;
+
+function path(polys){
+  let d='';
+  polys.forEach(poly=>poly.forEach(ring=>{
+    ring.forEach(([lo,la],i)=>{ d += (i?'L':'M') + px(lo).toFixed(4) + ' ' + py(la).toFixed(4); });
+    d+='Z';
+  }));
+  return d;
+}
+function dibujarBase(){
+  map.textContent='';
+  const gLand=document.createElementNS(NS,'g');
+  Object.keys(GEO).forEach(n=>{
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d',path(GEO[n]));
+    p.setAttribute('class','land'+(n==='Honduras'?'':' neighbor'));
+    gLand.appendChild(p);
+  });
+  map.appendChild(gLand);
+  map.appendChild(document.createElementNS(NS,'g')).id='gLab';
+  map.appendChild(document.createElementNS(NS,'g')).id='gPts';
+}
+function centroides(){
+  const m={};
+  UBIC.forEach(p=>{ (m[p.d]=m[p.d]||[]).push(p); });
+  return Object.entries(m).filter(([,v])=>v.length>=2).map(([d,v])=>({
+    d, x:v.reduce((s,p)=>s+px(p.lon),0)/v.length, y:v.reduce((s,p)=>s+py(p.lat),0)/v.length, n:v.length
+  }));
+}
+function pintar(){
+  const V=VIEWS[vista];
+  map.setAttribute('viewBox',`${V.x} ${V.y} ${V.W} ${V.H}`);
+  const r = V.W/105;
+  const gP=document.getElementById('gPts'), gL=document.getElementById('gLab');
+  gP.textContent=''; gL.textContent='';
+  if(vista==='zona'){
+    centroides().forEach(c=>{
+      const t=document.createElementNS(NS,'text');
+      t.setAttribute('x',c.x); t.setAttribute('y',c.y - r*2.6);
+      t.setAttribute('text-anchor','middle'); t.setAttribute('class','deplab');
+      t.style.fontSize = (V.W/95).toFixed(3) + 'px';
+      t.textContent=c.d; gL.appendChild(t);
+    });
+  }
+  const vis=visibles();
+  UBIC.forEach((p,i)=>{
+    const c=document.createElementNS(NS,'circle');
+    c.setAttribute('cx',px(p.lon)); c.setAttribute('cy',py(p.lat));
+    c.setAttribute('r', p.c ? r*1.15 : r*0.92);
+    c.setAttribute('fill', COL[p.t]);
+    c.setAttribute('class','pt'+(vis.has(p)?'':' off')+(sel===p?' sel':''));
+    if(sel===p) c.style.strokeWidth='2.6px';
+    c.style.strokeWidth = (p.c ? 2.4 : 1.2) + 'px';
+    c.addEventListener('pointerenter',e=>mostrarTip(e,p));
+    c.addEventListener('pointerleave',()=>{tip.hidden=true});
+    c.addEventListener('click',()=>{ sel=p; pintar(); detalle(p); });
+    gP.appendChild(c);
+  });
+}
+function mostrarTip(e,p){
+  const b=map.getBoundingClientRect();
+  tip.innerHTML = `<b>${esc(p.n)}</b><br><span class="m">${esc(p.m)}, ${esc(p.d)} · ${NOM[p.t]}`
+    + (p.s?` · ${esc(p.s)}`:'') + (p.c?' · vende cemento':'') + `</span>`;
+  tip.hidden=false;
+  tip.style.left = (e.clientX - b.left) + 'px';
+  tip.style.top  = (e.clientY - b.top) + 'px';
+}
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------------- filtros y lista ---------------- */
+const tipos = new Set(['cliente_actual','prospecto','sin_dato']);
+let dep='(todos)', soloCem=false, soloMay=false;
+function visibles(){
+  return new Set(PUNTOS.filter(p =>
+    tipos.has(p.t) &&
+    (dep==='(todos)' || p.d===dep) &&
+    (!soloCem || p.c) &&
+    (!soloMay || p.s==='Mayorista')
+  ));
+}
+function lista(){
+  const vis=[...visibles()].sort((a,b)=> (a.d+a.m+a.n).localeCompare(b.d+b.m+b.n,'es'));
+  const cont=document.getElementById('lista');
+  cont.innerHTML = vis.map((p,i)=>
+    `<div class="row" data-i="${PUNTOS.indexOf(p)}">
+       <div><div class="n">${esc(p.n)}</div><div class="m">${esc(p.m)}, ${esc(p.d)}</div></div>
+       <span class="badge ${CLS[p.t]}">${NOM[p.t]}</span>
+     </div>`).join('') || '<p class="small" style="padding:10px 0">Ningún registro con esos filtros.</p>';
+  cont.querySelectorAll('.row').forEach(r=>r.addEventListener('click',()=>{
+    const p=PUNTOS[+r.dataset.i]; sel=p; pintar(); detalle(p);
+  }));
+  document.getElementById('mapcount').textContent =
+    `${vis.length} de ${PUNTOS.length} fichas · ${[...visibles()].filter(p=>p.lat!==null&&dentro(p)).length} en el mapa`;
+}
+function detalle(p){
+  const d=document.getElementById('detalle');
+  d.innerHTML = `<div style="font-family:var(--f-disp);font-weight:600;font-size:15px">${esc(p.n)}</div>
+    <dl class="kv" style="margin-top:8px">
+      <dt>Lugar</dt><dd>${esc(p.m)}, ${esc(p.d)}</dd>
+      <dt>Clasificación</dt><dd>${NOM[p.t]}${p.s?' · '+esc(p.s):''}</dd>
+      <dt>Vende cemento</dt><dd>${p.c?'sí':'no'}</dd>
+      <dt>RTN</dt><dd class="num">${esc(p.rtn||'—')}</dd>
+      <dt>Propietario</dt><dd>${esc(p.p||'—')}</dd>
+      <dt>Teléfono</dt><dd class="num">${esc(p.tel||'—')}</dd>
+      <dt>Censada</dt><dd class="num">${esc(p.f||'—')}</dd>
+      <dt>Fotos / gamas</dt><dd class="num">${p.fo} / ${p.ga}</dd>
+      <dt>GPS</dt><dd class="num">${p.lat===null?'sin ubicación':(dentro(p)?p.lat+', '+p.lon:'coordenada inválida')}</dd>
+    </dl>`;
+}
+
+/* ---------------- economía ---------------- */
+const $ = id => document.getElementById(id);
+const campos = ['iSal','iCar','iVia','iCic','iVen','iMar','iFac'];
+function calcular(){
+  const sal=+$('iSal').value||0, car=+$('iCar').value||1, via=(+$('iVia').value||0)*(+$('iCic').value||0);
+  const ven=+$('iVen').value||0, mar=(+$('iMar').value||0)/100, fac=+$('iFac').value||0;
+  const planilla=sal*car, costo=planilla+via;
+  const bruta=ven*mar, cont=bruta-costo;
+  const eq = mar>0 ? costo/mar : 0;
+  const pct = bruta>0 ? costo/bruta*100 : null;
+  const veces = eq>0 ? ven/eq : 0;
+
+  $('oCost').textContent='L '+L0(costo);
+  $('oCostD').textContent=`planilla L ${L0(planilla)} + ruta L ${L0(via)}`;
+  $('oCont').textContent=(cont<0?'−L ':'L ')+L0(Math.abs(cont));
+  $('oCont').style.color = cont<0 ? 'var(--crit)' : 'var(--ink)';
+  $('oEq').textContent='L '+L0(eq);
+  $('oEqD').textContent = ven>0 ? `vende ${veces.toFixed(1)}× eso` : 'poné la venta del mes';
+  $('oPct').textContent = pct===null ? '—' : pct.toFixed(1)+'%';
+  $('oFac').textContent = fac>0 ? 'L '+L0(costo/fac) : '—';
+  $('oFacD').textContent = fac>0 ? `${fac} facturas al mes` : 'poné las facturas del mes';
+  $('oSob').textContent = ven>0 ? (costo/ven*100).toFixed(1)+'%' : '—';
+
+  const propH = via>0 ? via*(VIA_HOTEL/VIA_TOT) : 0, propC = via>0 ? via*(VIA_COMB/VIA_TOT) : 0;
+  $('dSal').textContent='L '+L(sal);
+  $('dCar').textContent='L '+L(planilla-sal);
+  $('dVia').textContent='L '+L(propH);
+  $('dCom').textContent='L '+L(propC);
+  $('dTot').textContent='L '+L(costo);
+
+  $('hVen').textContent = ven ? 'L '+L0(ven) : '—';
+  $('hUti').textContent = bruta ? 'L '+L0(bruta) : '—';
+  $('hMar').textContent = 'margen limpio '+(mar*100).toFixed(1)+'%';
+  $('hCos').textContent = 'L '+L0(costo);
+  $('hCon').textContent = ven ? ((cont<0?'−L ':'L ')+L0(Math.abs(cont))) : '—';
+  $('hVer').textContent = !ven ? 'falta la venta de la ruta'
+      : cont<0 ? 'la zona no se paga'
+      : `vende ${veces.toFixed(1)} veces su equilibrio`;
+
+  const ic=$('verdict').querySelector('.ic');
+  let t,d,c;
+  if(ven<=0){ c='var(--warn)'; t='Falta la venta de esta ruta';
+    d=`Con este costo, la ruta necesita vender L ${L0(eq)} al mes solo para pagarse. Poné la venta real arriba y la página responde.`; }
+  else if(cont<0){ c='var(--crit)'; t='La zona no se paga';
+    d=`Deja L ${L0(bruta)} de utilidad bruta y cuesta L ${L0(costo)}. Faltan L ${L0(-cont)} al mes.`; }
+  else if(pct>60){ c='var(--warn)'; t='Se paga, pero apenas';
+    d=`El asesor se lleva L ${pct.toFixed(0)} de cada L 100 de utilidad bruta. Queda poco para la bodega y la administración.`; }
+  else if(pct>30){ c='var(--warn)'; t='Rentable, con poco colchón';
+    d=`Se lleva L ${pct.toFixed(0)} de cada L 100 de utilidad bruta y deja L ${L0(cont)} al mes. Vende ${veces.toFixed(1)} veces su equilibrio.`; }
+  else { c='var(--good)'; t='Rentable con holgura';
+    d=`Se lleva L ${pct.toFixed(0)} de cada L 100 de utilidad bruta y deja L ${L0(cont)} al mes. Vende ${veces.toFixed(1)} veces su equilibrio.`; }
+  ic.style.background=c; $('vTit').textContent=t; $('vDet').textContent=d;
+  grafico(eq);
+}
+
+/* ---------------- gráfico mes a mes ---------------- */
+const chart=document.getElementById('chart'), ctip=document.getElementById('ctip');
+function grafico(eq){
+  const W=720,H=300,ml=62,mr=14,mt=16,mb=46;
+  const iw=W-ml-mr, ih=H-mt-mb;
+  const max=Math.max(...MESES.map(m=>m.v), eq||0)*1.08;
+  const y=v=>mt+ih-(v/max)*ih;
+  const bw=iw/MESES.length;
+  let s='';
+  const ticks=4;
+  for(let i=0;i<=ticks;i++){
+    const v=max/ticks*i, yy=y(v);
+    s+=`<line class="gl" x1="${ml}" y1="${yy.toFixed(1)}" x2="${W-mr}" y2="${yy.toFixed(1)}"/>`;
+    s+=`<text class="tk" x="${ml-8}" y="${(yy+3.5).toFixed(1)}" text-anchor="end">${L0(v/1000)}k</text>`;
+  }
+  MESES.forEach((m,i)=>{
+    const x=ml+i*bw+bw*0.17, w=bw*0.66, yy=y(m.v), h=mt+ih-yy;
+    const col = m.vend==='nahum' ? 'var(--s1)' : 'var(--s2)';
+    s+=`<rect class="bar" data-i="${i}" x="${x.toFixed(1)}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}"
+         height="${Math.max(h,1).toFixed(1)}" rx="4" fill="${col}"/>`;
+    s+=`<text class="tk" x="${(x+w/2).toFixed(1)}" y="${H-mb+16}" text-anchor="middle">${m.et}</text>`;
+    s+=`<text class="tk" x="${(x+w/2).toFixed(1)}" y="${H-mb+29}" text-anchor="middle"
+         style="fill:var(--ink-2)">${m.mg.toFixed(1)}%</text>`;
+  });
+  s+=`<line class="bl" x1="${ml}" y1="${mt+ih}" x2="${W-mr}" y2="${mt+ih}"/>`;
+  if(eq>0 && eq<max){
+    const ye=y(eq);
+    s+=`<line class="eqline" x1="${ml}" y1="${ye.toFixed(1)}" x2="${W-mr}" y2="${ye.toFixed(1)}"/>`;
+    s+=`<rect x="${ml+1}" y="${(ye-18).toFixed(1)}" width="168" height="15" rx="3"
+         fill="var(--surface)" opacity=".92"/>`;
+    s+=`<text class="eqtxt" x="${ml+5}" y="${(ye-7).toFixed(1)}">equilibrio L ${L0(eq)} al mes</text>`;
+  }
+  s+=`<text class="tk" x="${ml}" y="${H-6}" style="fill:var(--muted)">el % bajo cada mes es el margen limpio</text>`;
+  chart.innerHTML=s;
+  grafMargen();
+  chart.querySelectorAll('.bar').forEach(b=>{
+    b.addEventListener('pointerenter',e=>{
+      const m=MESES[+b.dataset.i], r=chart.getBoundingClientRect();
+      ctip.innerHTML=`<b>${m.largo}</b><br><span class="m">${m.nom}<br>venta L ${L(m.v)}<br>
+        utilidad L ${L(m.u)} · ${m.mg.toFixed(1)}%<br>${m.f} facturas</span>`;
+      ctip.hidden=false;
+      ctip.style.left=(e.clientX-r.left)+'px'; ctip.style.top=(e.clientY-r.top)+'px';
+    });
+    b.addEventListener('pointerleave',()=>{ctip.hidden=true});
+  });
+}
+
+function grafMargen(){
+  const g=document.getElementById('chartmg'); if(!g) return;
+  const W=720,H=150,ml=62,mr=14,mt=14,mb=26, iw=W-ml-mr, ih=H-mt-mb;
+  const max=30, y=v=>mt+ih-(v/max)*ih, bw=iw/MESES.length;
+  let s='';
+  [0,10,20,30].forEach(v=>{
+    const yy=y(v);
+    s+=`<line class="gl" x1="${ml}" y1="${yy.toFixed(1)}" x2="${W-mr}" y2="${yy.toFixed(1)}"/>`;
+    s+=`<text class="tk" x="${ml-8}" y="${(yy+3.5).toFixed(1)}" text-anchor="end">${v}%</text>`;
+  });
+  const prom=16.2, yp=y(prom);
+  s+=`<line class="eqline" x1="${ml}" y1="${yp.toFixed(1)}" x2="${W-mr}" y2="${yp.toFixed(1)}"/>`;
+  s+=`<rect x="${ml+1}" y="${(yp-17).toFixed(1)}" width="150" height="15" rx="3"
+       fill="var(--surface)" opacity=".92"/>`;
+  s+=`<text class="eqtxt" x="${ml+5}" y="${(yp-6).toFixed(1)}">margen de la zona 16.2%</text>`;
+  const pt=MESES.map((m,i)=>[ml+i*bw+bw/2, y(m.mg)]);
+  for(const v of ['nahum','jose']){
+    const d=pt.map((p,i)=>MESES[i].vend===v?p:null).filter(Boolean);
+    if(d.length>1) s+=`<polyline fill="none" stroke="${v==='nahum'?'var(--s1)':'var(--s2)'}"
+       stroke-width="2" stroke-linejoin="round" points="${d.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' ')}"/>`;
+  }
+  MESES.forEach((m,i)=>{
+    const [x,yy]=pt[i];
+    s+=`<circle cx="${x.toFixed(1)}" cy="${yy.toFixed(1)}" r="4.5"
+         fill="${m.vend==='nahum'?'var(--s1)':'var(--s2)'}" stroke="var(--surface)" stroke-width="2"/>`;
+  });
+  s+=`<text class="tk" x="${ml}" y="${H-5}" style="fill:var(--muted)">margen limpio de cada mes</text>`;
+  g.innerHTML=s;
+}
+
+/* ---------------- arranque ---------------- */
+(function init(){
+  dibujarBase();
+  const deps=[...new Set(PUNTOS.map(p=>p.d))].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'));
+  $('fdep').innerHTML = ['(todos)',...deps].map(d=>`<option>${esc(d)}</option>`).join('');
+  $('fdep').addEventListener('change',e=>{dep=e.target.value; pintar(); lista();});
+  document.querySelectorAll('.chip[data-t]').forEach(b=>b.addEventListener('click',()=>{
+    const t=b.dataset.t, on=b.getAttribute('aria-pressed')==='true';
+    b.setAttribute('aria-pressed',String(!on)); on?tipos.delete(t):tipos.add(t); pintar(); lista();
+  }));
+  $('fcem').addEventListener('click',()=>{soloCem=!soloCem;
+    $('fcem').setAttribute('aria-pressed',String(soloCem)); pintar(); lista();});
+  $('fmay').addEventListener('click',()=>{soloMay=!soloMay;
+    $('fmay').setAttribute('aria-pressed',String(soloMay)); pintar(); lista();});
+  $('vZona').addEventListener('click',()=>{vista='zona';
+    $('vZona').setAttribute('aria-pressed','true'); $('vPais').setAttribute('aria-pressed','false'); pintar();});
+  $('vPais').addEventListener('click',()=>{vista='pais';
+    $('vPais').setAttribute('aria-pressed','false'); $('vZona').setAttribute('aria-pressed','false');
+    $('vPais').setAttribute('aria-pressed','true'); pintar();});
+  document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.preset').forEach(o=>o.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    const p=PRESETS[b.dataset.p];
+    $('iSal').value=p.sal; $('iCar').value=p.car; $('iVia').value=p.via; $('iCic').value=p.cic;
+    $('iVen').value=p.ven||''; $('iMar').value=p.mar; $('iFac').value=p.fac||'';
+    $('hQuien').textContent = b.textContent.trim();
+    calcular();
+  }));
+  campos.forEach(id=>$(id).addEventListener('input',calcular));
+  $('gpsnote').innerHTML = `De las ${PUNTOS.length} fichas, ${UBIC.length} caen en el mapa.
+    ${SINGPS.length} se levantaron sin GPS y ${MALGPS.length} traen una coordenada imposible
+    (${MALGPS.map(p=>esc(p.n)).join(' y ')} quedan en medio del Atlántico). Esas
+    ${SINGPS.length+MALGPS.length} hay que volverlas a ubicar para que entren en el mapa de ruta.`;
+  $('hQuien').textContent = 'José A. · 2026';
+  let guardado = null;
+  try { guardado = localStorage.getItem('tema'); } catch (e) {}
+  if (guardado) document.documentElement.setAttribute('data-theme', guardado);
+  const rotulo = () => {
+    const d = document.documentElement.getAttribute('data-theme') === 'dark'
+      || (!document.documentElement.getAttribute('data-theme')
+          && matchMedia('(prefers-color-scheme: dark)').matches);
+    $('btema').textContent = d ? 'Modo claro' : 'Modo oscuro';
+    return d;
+  };
+  rotulo();
+  $('btema').addEventListener('click', () => {
+    const d = rotulo();
+    document.documentElement.setAttribute('data-theme', d ? 'light' : 'dark');
+    try { localStorage.setItem('tema', d ? 'light' : 'dark'); } catch (e) {}
+    rotulo(); pintar();
+  });
+  pintar(); lista(); calcular();
+})();
+
+/* ---------------- clientes ---------------- */
+const CLI = [{"n":"VARIEDADES Y FERRETERIA \"ARIAS\"","e":"sigue","f1":2,"a":3848.12,"ua":606.2,"f2":3,"b":88912.6,"ub":10652.52,"mg":12.0},{"n":"Comercial Zuniga S. de R.L. de C.V.","e":"sigue","f1":4,"a":47810.77,"ua":3655.81,"f2":3,"b":112041.64,"ub":15669.58,"mg":14.0},{"n":"\"FERRECON\" S. DE R.L DE C.V","e":"sigue","f1":6,"a":14400.62,"ua":1473.7,"f2":4,"b":52699.28,"ub":9638.3,"mg":18.3},{"n":"EL INGENIO FERRETERO","e":"sigue","f1":7,"a":26862.0,"ua":3135.42,"f2":7,"b":62833.41,"ub":9667.16,"mg":15.4},{"n":"INVERSIONES DIAZ","e":"sigue","f1":1,"a":1645.08,"ua":318.97,"f2":4,"b":35077.87,"ub":5064.27,"mg":14.4},{"n":"Ferreteria AGROFESAV","e":"sigue","f1":2,"a":4382.92,"ua":631.62,"f2":5,"b":37505.06,"ub":5093.69,"mg":13.6},{"n":"OSCAR AMILCAR MADRID MENDOZA","e":"sigue","f1":2,"a":331.58,"ua":108.2,"f2":6,"b":30479.17,"ub":4997.82,"mg":16.4},{"n":"INVERSIONES CASTELLON","e":"sigue","f1":7,"a":28687.04,"ua":4211.92,"f2":4,"b":52709.91,"ub":6822.62,"mg":12.9},{"n":"MULTI INVERSIONES LARA","e":"sigue","f1":7,"a":13068.46,"ua":2253.07,"f2":6,"b":32080.65,"ub":5558.47,"mg":17.3},{"n":"EMPRESA ELECTRICOS Y MAS ENAMORADO","e":"sigue","f1":2,"a":3932.83,"ua":470.27,"f2":2,"b":19164.9,"ub":3518.63,"mg":18.4},{"n":"FERRETERIA, REPUESTOS Y ACCESORIOS \"EVOR…\"","e":"sigue","f1":4,"a":3976.18,"ua":491.42,"f2":2,"b":18174.35,"ub":2385.25,"mg":13.1},{"n":"FERRETERIA Y BLOQUERA JUNIOR","e":"sigue","f1":6,"a":5274.84,"ua":1042.72,"f2":2,"b":19318.31,"ub":2847.58,"mg":14.7},{"n":"FERRETERIA EL PRECIO JUSTO","e":"sigue","f1":8,"a":24783.34,"ua":3831.66,"f2":4,"b":37709.61,"ub":8866.05,"mg":23.5},{"n":"AGRO FERRETERIA POPULAR","e":"sigue","f1":3,"a":14530.48,"ua":2154.37,"f2":7,"b":26078.51,"ub":4812.79,"mg":18.5},{"n":"FERRETERIA LA BUENA FE","e":"sigue","f1":1,"a":997.41,"ua":238.38,"f2":3,"b":12514.72,"ub":2056.33,"mg":16.4},{"n":"FERRETERÍA MARCOS FERREMAR","e":"sigue","f1":6,"a":9054.55,"ua":942.69,"f2":5,"b":19580.23,"ub":2968.2,"mg":15.2},{"n":"FERRETERIA EL CENTRO","e":"sigue","f1":1,"a":2950.29,"ua":577.35,"f2":2,"b":13170.44,"ub":2276.21,"mg":17.3},{"n":"Ferreteria el Centro","e":"sigue","f1":3,"a":19503.92,"ua":2573.15,"f2":3,"b":25622.14,"ub":5838.6,"mg":22.8},{"n":"HOME CERAMICAS","e":"sigue","f1":5,"a":5250.54,"ua":2818.3,"f2":5,"b":11341.01,"ub":3348.03,"mg":29.5},{"n":"FERRETERIA COMERCIAL LA ECONOMICA","e":"sigue","f1":1,"a":1038.6,"ua":187.84,"f2":1,"b":6782.4,"ub":1090.05,"mg":16.1},{"n":"AGROFERRETERIA PAIN","e":"sigue","f1":2,"a":1290.99,"ua":261.81,"f2":1,"b":6603.14,"ub":1622.63,"mg":24.6},{"n":"COMERCIAL FERRETERA ARPA","e":"sigue","f1":3,"a":7782.25,"ua":1650.42,"f2":2,"b":11664.05,"ub":1417.4,"mg":12.2},{"n":"INVERSIONES Y FERRETERIA MAXIMO","e":"sigue","f1":2,"a":1379.32,"ua":252.86,"f2":2,"b":3014.19,"ub":805.58,"mg":26.7},{"n":"INVERSIONES P DUBON","e":"sigue","f1":3,"a":1849.18,"ua":381.15,"f2":3,"b":3350.83,"ub":1427.09,"mg":42.6},{"n":"AGRO COMERCIAL LOS AMIGOS","e":"sigue","f1":5,"a":7357.32,"ua":1051.77,"f2":2,"b":8664.1,"ub":1223.72,"mg":14.1},{"n":"FERRETERIA FAROLITO","e":"sigue","f1":1,"a":127.83,"ua":14.37,"f2":6,"b":1374.18,"ub":418.55,"mg":30.5},{"n":"FERRETERIA LUFESA","e":"sigue","f1":1,"a":759.04,"ua":120.53,"f2":2,"b":1975.98,"ub":404.62,"mg":20.5},{"n":"IMSELH S. DE R.L. DE C.V","e":"sigue","f1":2,"a":220.17,"ua":45.22,"f2":2,"b":946.9,"ub":252.49,"mg":26.7},{"n":"INVERSIONES MUÑOZ","e":"sigue","f1":5,"a":11391.65,"ua":1445.19,"f2":2,"b":12113.04,"ub":1525.89,"mg":12.6},{"n":"FERRE PARTES VILENI","e":"sigue","f1":1,"a":111.24,"ua":0.0,"f2":2,"b":521.53,"ub":58.22,"mg":11.2},{"n":"FERRETERIA SAN CARLOS","e":"sigue","f1":3,"a":1963.53,"ua":407.01,"f2":1,"b":1150.82,"ub":445.77,"mg":38.7},{"n":"FERRETERIA DOBLADO","e":"sigue","f1":5,"a":1932.73,"ua":998.56,"f2":1,"b":1007.0,"ub":257.08,"mg":25.5},{"n":"BLOQUERA Y FERRETERIA KENSY","e":"sigue","f1":5,"a":13404.03,"ua":2708.82,"f2":1,"b":8799.6,"ub":2505.1,"mg":28.5},{"n":"EL CONSTRUCTOR FERRETERIA Y COMERCIAL","e":"sigue","f1":3,"a":7811.08,"ua":2005.15,"f2":1,"b":1458.85,"ub":255.3,"mg":17.5},{"n":"FERRETERIA MADRID","e":"sigue","f1":10,"a":11790.33,"ua":5200.61,"f2":1,"b":4617.36,"ub":884.66,"mg":19.2},{"n":"FERRETERIA LA ECONOMICA","e":"sigue","f1":3,"a":22685.09,"ua":5029.68,"f2":3,"b":13605.84,"ub":2593.45,"mg":19.1},{"n":"Agroferreteria y Mas Genesis","e":"sigue","f1":2,"a":13337.4,"ua":955.41,"f2":1,"b":667.82,"ub":98.06,"mg":14.7},{"n":"PENIEL'S INVESTMENTS S. DE R.L.","e":"perdido","f1":4,"a":35627.29,"ua":3687.01,"f2":0,"b":0,"ub":0,"mg":10.3},{"n":"AGROCOMERCIAL JENNY","e":"perdido","f1":7,"a":27080.32,"ua":8393.2,"f2":0,"b":0,"ub":0,"mg":31.0},{"n":"FERRETERIA E INVERSIONES GOMEZ","e":"perdido","f1":6,"a":24422.38,"ua":7012.13,"f2":0,"b":0,"ub":0,"mg":28.7},{"n":"INVERSIONES RODRIGUEZ","e":"perdido","f1":2,"a":19249.88,"ua":2181.6,"f2":0,"b":0,"ub":0,"mg":11.3},{"n":"KAREN GISELA ZAMORA PERDOMO","e":"perdido","f1":4,"a":10225.49,"ua":1725.27,"f2":0,"b":0,"ub":0,"mg":16.9},{"n":"INVERSIONES GUZMAN","e":"perdido","f1":5,"a":10111.6,"ua":5109.41,"f2":0,"b":0,"ub":0,"mg":50.5},{"n":"BLOQUERA Y FERRETERIA SHALOM","e":"perdido","f1":2,"a":9912.52,"ua":1266.45,"f2":0,"b":0,"ub":0,"mg":12.8},{"n":"AGROFERRETERIA EL PROFE","e":"perdido","f1":4,"a":8182.65,"ua":997.49,"f2":0,"b":0,"ub":0,"mg":12.2},{"n":"AGROPECUARIA BUESO","e":"perdido","f1":7,"a":7643.18,"ua":799.18,"f2":0,"b":0,"ub":0,"mg":10.5},{"n":"Agroferreteria y Mas Genesis Nº 2","e":"perdido","f1":1,"a":7088.78,"ua":1327.55,"f2":0,"b":0,"ub":0,"mg":18.7},{"n":"COMERCIAL FERRETERA CAPA","e":"perdido","f1":6,"a":6096.38,"ua":856.93,"f2":0,"b":0,"ub":0,"mg":14.1},{"n":"AGROFER","e":"perdido","f1":7,"a":4721.86,"ua":880.54,"f2":0,"b":0,"ub":0,"mg":18.6},{"n":"INVERSIONES ZAMORA","e":"perdido","f1":3,"a":3529.34,"ua":360.01,"f2":0,"b":0,"ub":0,"mg":10.2},{"n":"ABARROTERIA EBENEZER","e":"perdido","f1":2,"a":3066.36,"ua":429.83,"f2":0,"b":0,"ub":0,"mg":14.0},{"n":"INVERSIONES MENOCAL S. DE R.L","e":"perdido","f1":4,"a":3023.72,"ua":358.9,"f2":0,"b":0,"ub":0,"mg":11.9},{"n":"FERRETERIA NAVARRO","e":"perdido","f1":3,"a":2924.7,"ua":385.81,"f2":0,"b":0,"ub":0,"mg":13.2},{"n":"MULTI INVERSIONES Y FERRETERIA LA BUENA…","e":"perdido","f1":2,"a":2591.65,"ua":521.25,"f2":0,"b":0,"ub":0,"mg":20.1},{"n":"NOVEDADES LOPEZ GATTAS","e":"perdido","f1":4,"a":2297.6,"ua":470.04,"f2":0,"b":0,"ub":0,"mg":20.5},{"n":"FERRETERIA JANCAR","e":"perdido","f1":2,"a":1832.04,"ua":484.96,"f2":0,"b":0,"ub":0,"mg":26.5},{"n":"INVERSIONES BEILYN","e":"perdido","f1":4,"a":1556.37,"ua":387.75,"f2":0,"b":0,"ub":0,"mg":24.9},{"n":"INVERSIONES DANIRAP S. DE R.L. DE C.V.","e":"perdido","f1":5,"a":1377.07,"ua":128.62,"f2":0,"b":0,"ub":0,"mg":9.3},{"n":"FERRETERIA TOTY DEPOT","e":"perdido","f1":3,"a":1361.57,"ua":347.21,"f2":0,"b":0,"ub":0,"mg":25.5},{"n":"INVERSIONES HERNANDEZ TORRES","e":"perdido","f1":1,"a":1257.07,"ua":605.11,"f2":0,"b":0,"ub":0,"mg":48.1},{"n":"FERRECOMERCIAL TIERRA BLANCA (FERCO)","e":"perdido","f1":1,"a":1224.24,"ua":200.0,"f2":0,"b":0,"ub":0,"mg":16.3},{"n":"AGRO FERRETERIA FAJARDO'S","e":"perdido","f1":1,"a":1074.48,"ua":176.83,"f2":0,"b":0,"ub":0,"mg":16.5},{"n":"TORNIFER","e":"perdido","f1":2,"a":825.52,"ua":114.44,"f2":0,"b":0,"ub":0,"mg":13.9},{"n":"AGRO-COMERCIAL DEL CAMPO","e":"perdido","f1":1,"a":717.88,"ua":203.85,"f2":0,"b":0,"ub":0,"mg":28.4},{"n":"COMERCIAL DUARTE","e":"perdido","f1":3,"a":600.24,"ua":171.3,"f2":0,"b":0,"ub":0,"mg":28.5},{"n":"INVERSIONES VASQUEZ","e":"perdido","f1":1,"a":499.02,"ua":141.54,"f2":0,"b":0,"ub":0,"mg":28.4},{"n":"FERRETERIA GETHSEMANÍ","e":"perdido","f1":3,"a":454.63,"ua":121.94,"f2":0,"b":0,"ub":0,"mg":26.8},{"n":"FERRETERIA BLESSING","e":"perdido","f1":1,"a":331.22,"ua":47.87,"f2":0,"b":0,"ub":0,"mg":14.5},{"n":"SURTIDORA \"LA CONFIANZA\"","e":"perdido","f1":3,"a":327.79,"ua":148.19,"f2":0,"b":0,"ub":0,"mg":45.2},{"n":"ECOSISTEMA DE HONDURAS","e":"perdido","f1":2,"a":244.53,"ua":59.8,"f2":0,"b":0,"ub":0,"mg":24.5},{"n":"FERRETERIA JEREZANO","e":"perdido","f1":1,"a":242.73,"ua":79.46,"f2":0,"b":0,"ub":0,"mg":32.7},{"n":"COMERCIAL TRINITECA S. DE R.L.","e":"perdido","f1":2,"a":158.89,"ua":37.98,"f2":0,"b":0,"ub":0,"mg":23.9},{"n":"CASA FERRETERA FIALLOS","e":"perdido","f1":1,"a":96.27,"ua":17.45,"f2":0,"b":0,"ub":0,"mg":18.1},{"n":"CASA COMERCIAL GUTIERREZ","e":"perdido","f1":2,"a":57.9,"ua":14.17,"f2":0,"b":0,"ub":0,"mg":24.5},{"n":"INVERSIONES DOS CAMINOS S. DE R.L","e":"perdido","f1":1,"a":20.38,"ua":7.7,"f2":0,"b":0,"ub":0,"mg":37.8},{"n":"CONAHSA DE C.V","e":"nuevo","f1":0,"a":0,"ua":0,"f2":3,"b":100257.14,"ub":13781.85,"mg":13.7},{"n":"GUTIERREZ Y ASOCIADOS, S. DE R.L.","e":"nuevo","f1":0,"a":0,"ua":0,"f2":3,"b":70685.54,"ub":8798.65,"mg":12.4},{"n":"CONSTRU-PREMIER FRESAR FERRETERIA","e":"nuevo","f1":0,"a":0,"ua":0,"f2":5,"b":55437.49,"ub":10759.79,"mg":19.4},{"n":"AGRO FERRETERIA SAN LUIS AGROFERSA","e":"nuevo","f1":0,"a":0,"ua":0,"f2":3,"b":39929.24,"ub":5868.99,"mg":14.7},{"n":"FERRETERIA ENAMORADO","e":"nuevo","f1":0,"a":0,"ua":0,"f2":2,"b":27993.75,"ub":6500.67,"mg":23.2},{"n":"FERRETERIA LEON","e":"nuevo","f1":0,"a":0,"ua":0,"f2":1,"b":13969.74,"ub":1775.07,"mg":12.7},{"n":"FERRETERIA CIMIENTOS DE SAN ANTONIO","e":"nuevo","f1":0,"a":0,"ua":0,"f2":5,"b":13745.17,"ub":3065.06,"mg":22.3},{"n":"FECOMSA","e":"nuevo","f1":0,"a":0,"ua":0,"f2":3,"b":11255.34,"ub":2815.32,"mg":25.0},{"n":"FERRETERIA MADRID CACERES","e":"nuevo","f1":0,"a":0,"ua":0,"f2":4,"b":7073.21,"ub":1506.52,"mg":21.3},{"n":"INVERSIONES BARDALES","e":"nuevo","f1":0,"a":0,"ua":0,"f2":2,"b":5515.5,"ub":724.64,"mg":13.1},{"n":"FERRETERIA JOSUE","e":"nuevo","f1":0,"a":0,"ua":0,"f2":1,"b":4584.6,"ub":577.65,"mg":12.6},{"n":"FERRETERIA PEREIRA (FEPESA)","e":"nuevo","f1":0,"a":0,"ua":0,"f2":1,"b":1460.8,"ub":403.87,"mg":27.6},{"n":"FERRETERIA KALEPA","e":"nuevo","f1":0,"a":0,"ua":0,"f2":1,"b":1069.8,"ub":277.1,"mg":25.9},{"n":"FERRETERIA Y ACCESORIOS \"LA HERRAMIENTA\"","e":"nuevo","f1":0,"a":0,"ua":0,"f2":1,"b":730.4,"ub":201.93,"mg":27.6},{"n":"ELECTRICOS BET-EL","e":"nuevo","f1":0,"a":0,"ua":0,"f2":2,"b":484.54,"ub":0.0,"mg":0.0},{"n":"LA CASA DE LA CERAMICA","e":"nuevo","f1":0,"a":0,"ua":0,"f2":1,"b":171.5,"ub":170.71,"mg":99.5},{"n":"COMERCIAL LAINEZ","e":"nuevo","f1":0,"a":0,"ua":0,"f2":1,"b":163.0,"ub":62.73,"mg":38.5},{"n":"HOSPITAL EVANGELICO","e":"nuevo","f1":0,"a":0,"ua":0,"f2":1,"b":36.48,"ub":3.98,"mg":10.9}];
+const ETQ={sigue:'sigue',perdido:'se perdió',nuevo:'nuevo'};
+const etapas=new Set(['sigue','perdido','nuevo']);
+let ordK='b', ordD=-1;
+function tablaCli(){
+  const f=CLI.filter(c=>etapas.has(c.e));
+  f.sort((x,y)=> ordK==='n'||ordK==='e'
+      ? ordD*String(x[ordK]).localeCompare(String(y[ordK]),'es')
+      : ordD*((x[ordK]||0)-(y[ordK]||0)));
+  const cel=v=>v?L(v):'—', ent=v=>v?v:'—';
+  $('cliBody').innerHTML=f.map(c=>`<tr>
+      <td>${esc(c.n)}</td><td><span class="badge ${c.e==='sigue'?'cli':c.e==='nuevo'?'sd':'pro'}">${ETQ[c.e]}</span></td>
+      <td class="num">${ent(c.f1)}</td><td class="num">${cel(c.a)}</td><td class="num">${cel(c.ua)}</td>
+      <td class="num">${ent(c.f2)}</td><td class="num">${cel(c.b)}</td><td class="num">${cel(c.ub)}</td>
+      <td class="num">${c.mg?c.mg.toFixed(1)+'%':'—'}</td></tr>`).join('');
+  const sum=k=>f.reduce((t,c)=>t+(c[k]||0),0);
+  const mgT = sum('b') ? sum('ub')/sum('b')*100 : (sum('a') ? sum('ua')/sum('a')*100 : 0);
+  $('cliFoot').innerHTML = `<tr><td>Suma de los ${f.length} clientes</td><td></td>
+       <td class="num">${sum('f1')}</td><td class="num">${L(sum('a'))}</td><td class="num">${L(sum('ua'))}</td>
+       <td class="num">${sum('f2')}</td><td class="num">${L(sum('b'))}</td><td class="num">${L(sum('ub'))}</td>
+       <td class="num">${mgT.toFixed(1)}%</td></tr>`;
+  $('cliN').textContent = `${f.length} clientes · ${sum('f1')} facturas antes, ${sum('f2')} ahora`;
+  document.querySelectorAll('#tcli thead th[data-k]').forEach(th=>{
+    const on=th.dataset.k===ordK;
+    th.setAttribute('aria-sort', on ? (ordD<0?'descending':'ascending') : 'none');
+    th.querySelector('.ar').textContent = on ? (ordD<0?'▾':'▴') : '';
+  });
+}
+document.querySelectorAll('#tcli thead th[data-k]').forEach(th=>th.addEventListener('click',()=>{
+  const k=th.dataset.k;
+  if(k===ordK) ordD*=-1; else { ordK=k; ordD = (k==='n'||k==='e') ? 1 : -1; }
+  tablaCli();
+}));
+document.querySelectorAll('.chip.ce').forEach(b=>b.addEventListener('click',()=>{
+  const e=b.dataset.e, on=b.getAttribute('aria-pressed')==='true';
+  b.setAttribute('aria-pressed',String(!on)); on?etapas.delete(e):etapas.add(e); tablaCli();
+}));
+tablaCli();
+
+</script>
+
+</body>
+</html>
